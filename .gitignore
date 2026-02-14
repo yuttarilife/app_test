@@ -1,0 +1,26 @@
+# JSON files
+*.json
+
+# Claude Code / AI agent local config
+.claude/
+.agent/
+
+# Environment variables / secrets
+.env
+.env.*
+
+# Logs (LOG.md is tracked separately)
+*.log
+
+# Node.js
+node_modules/
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+~$*
