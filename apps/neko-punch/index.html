@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>猫パンチマシン</title>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation}
 html,body{height:100%;overflow:hidden}
 body{
   min-height:100dvh;display:flex;flex-direction:column;
@@ -14,6 +14,7 @@ body{
   user-select:none;-webkit-user-select:none;
   touch-action:manipulation;
   cursor:pointer;
+  -webkit-text-size-adjust:100%;
 }
 
 /* === Header === */
@@ -35,6 +36,8 @@ body{
 #combo-display{
   font-size:1.5rem;font-weight:900;
   transition:all 0.15s ease;min-height:2rem;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  max-width:100%;
 }
 
 /* === Punch Area === */
@@ -1381,6 +1384,13 @@ NekoPunch.UI = (() => {
 /* ─── Init ─── */
 NekoPunch.Storage.init();
 NekoPunch.UI.init();
+
+// Prevent pinch-zoom and double-tap zoom on iOS/Android
+document.addEventListener('touchstart', e => {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
 </script>
 </body>
 </html>
