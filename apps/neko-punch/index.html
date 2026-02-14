@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>怒れる猫パンチマシン</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  min-height:100dvh;display:flex;flex-direction:column;
+  background:#1a1a2e;color:#eee;
+  font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif;
+  user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;
+  cursor:pointer;
+}
+
+/* === Header === */
+#header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 16px;flex-shrink:0;z-index:10;
+}
+#header h1{font-size:1rem;color:#f5a623;letter-spacing:0.05em}
+.header-btn{
+  background:none;border:1px solid rgba(255,255,255,0.2);
+  color:#eee;padding:4px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;
+}
+.header-btn:hover{background:rgba(255,255,255,0.1)}
+
+/* === Score Area === */
+#score-area{
+  text-align:center;padding:4px 16px;flex-shrink:0;
+}
+#combo-display{
+  font-size:1.5rem;font-weight:900;
+  transition:all 0.15s ease;min-height:2rem;
+}
+#score-display{font-size:0.9rem;opacity:0.8}
+#title-display{font-size:0.8rem;color:#f5a623;margin-top:2px}
+
+/* === Punch Area === */
+#punch-area{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  transition:background-color 0.3s ease;
+}
+#punch-area.shake{animation:screen-shake 0.1s ease}
+#punch-area.fire{background:radial-gradient(circle at center,rgba(255,80,0,0.15),transparent 70%)}
+#punch-area.rainbow{animation:rainbow-bg 1s linear infinite}
+
+/* === Cat SVG === */
+#neko-container{
+  position:relative;width:200px;height:220px;
+  transition:transform 0.3s ease;
+}
+#neko-container.big{transform:scale(1.3)}
+#neko-container.purring{animation:purr-vibrate 0.1s infinite}
+#neko{width:100%;height:100%}
+
+/* Paw animations */
+#paw-left,#paw-right{transition:transform 0.05s ease}
+.punch-left #paw-left{animation:punch-l 0.2s ease forwards}
+.punch-right #paw-right{animation:punch-r 0.2s ease forwards}
+
+@keyframes punch-l{
+  0%{transform:translate(0,0) rotate(0)}
+  40%{transform:translate(-50px,-40px) rotate(-20deg) scale(1.3)}
+  100%{transform:translate(0,0) rotate(0)}
+}
+@keyframes punch-r{
+  0%{transform:translate(0,0) rotate(0)}
+  40%{transform:translate(50px,-40px) rotate(20deg) scale(1.3)}
+  100%{transform:translate(0,0) rotate(0)}
+}
+
+/* Effects */
+@keyframes screen-shake{
+  0%,100%{transform:translate(0)}
+  25%{transform:translate(-4px,3px)}
+  50%{transform:translate(4px,-3px)}
+  75%{transform:translate(-3px,-4px)}
+}
+@keyframes rainbow-bg{
+  0%{background-color:rgba(255,107,107,0.2)}
+  16%{background-color:rgba(255,165,2,0.2)}
+  33%{background-color:rgba(255,211,42,0.2)}
+  50%{background-color:rgba(123,237,159,0.2)}
+  66%{background-color:rgba(112,161,255,0.2)}
+  83%{background-color:rgba(162,155,254,0.2)}
+  100%{background-color:rgba(255,107,107,0.2)}
+}
+@keyframes purr-vibrate{
+  0%,100%{transform:translate(0,0)}
+  25%{transform:translate(0.8px,0.8px)}
+  75%{transform:translate(-0.8px,-0.8px)}
+}
+@keyframes float-up{
+  0%{opacity:1;transform:translate(-50%,0) scale(0.5)}
+  100%{opacity:0;transform:translate(-50%,-100px) scale(1.3)}
+}
+@keyframes pop-text{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)}
+  50%{transform:translate(-50%,-50%) scale(1.2)}
+  100%{opacity:0;transform:translate(-50%,-80px) scale(0.8)}
+}
+@keyframes particle-fly{
+  0%{transform:translate(0,0) scale(1);opacity:1}
+  100%{transform:translate(var(--dx),var(--dy)) scale(0.3);opacity:0}
+}
+@keyframes glow-eyes{
+  0%,100%{filter:drop-shadow(0 0 4px #ff6348)}
+  50%{filter:drop-shadow(0 0 12px #ff4757)}
+}
+@keyframes spin-punch{
+  0%{transform:rotate(0deg)}
+  100%{transform:rotate(360deg)}
+}
+
+.pop-text{
+  position:absolute;pointer-events:none;
+  font-size:1.8rem;font-weight:900;color:#ff6348;
+  text-shadow:0 0 8px rgba(255,99,72,0.6);
+  animation:pop-text 0.5s ease-out forwards;
+}
+.heart-float{
+  position:absolute;pointer-events:none;
+  font-size:1.5rem;
+  animation:float-up 1.2s ease-out forwards;
+}
+.particle{
+  position:absolute;pointer-events:none;font-size:1.2rem;
+  animation:particle-fly 0.6s ease-out forwards;
+}
+
+/* === Quote Area === */
+#quote-area{
+  padding:12px 20px;flex-shrink:0;text-align:center;
+  min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+#quote-bubble{
+  background:rgba(255,255,255,0.08);border-radius:16px;
+  padding:12px 20px;max-width:360px;position:relative;
+  font-size:0.9rem;line-height:1.5;
+}
+#quote-bubble::before{
+  content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  border-left:8px solid transparent;border-right:8px solid transparent;
+  border-bottom:8px solid rgba(255,255,255,0.08);
+}
+#fav-btn{
+  background:none;border:none;cursor:pointer;font-size:1.2rem;
+  margin-top:4px;opacity:0.5;transition:opacity 0.2s;
+}
+#fav-btn.active{opacity:1}
+
+/* === Footer === */
+#footer{
+  display:flex;justify-content:center;gap:16px;
+  padding:8px 16px;font-size:0.7rem;opacity:0.5;flex-shrink:0;
+}
+
+/* === Modals === */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);
+  z-index:100;align-items:center;justify-content:center;
+}
+.modal-overlay.active{display:flex}
+.modal{
+  background:#16213e;border-radius:16px;padding:24px;
+  max-width:360px;width:90%;max-height:80vh;overflow-y:auto;
+}
+.modal h2{font-size:1.1rem;margin-bottom:12px;color:#f5a623}
+.modal-close{
+  background:none;border:1px solid rgba(255,255,255,0.2);
+  color:#eee;padding:6px 16px;border-radius:8px;cursor:pointer;
+  margin-top:12px;font-size:0.85rem;
+}
+.achievement-item{
+  display:flex;align-items:center;gap:8px;padding:6px 0;
+  font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.achievement-item.locked{opacity:0.35}
+.toggle-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;font-size:0.85rem;
+}
+.toggle-switch{
+  width:44px;height:24px;background:#333;border-radius:12px;
+  position:relative;cursor:pointer;transition:background 0.2s;
+}
+.toggle-switch.on{background:#f5a623}
+.toggle-switch::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:20px;height:20px;background:#fff;border-radius:50%;
+  transition:transform 0.2s;
+}
+.toggle-switch.on::after{transform:translateX(20px)}
+
+/* === Notification === */
+#notification{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  background:#f5a623;color:#1a1a2e;padding:8px 20px;border-radius:12px;
+  font-size:0.85rem;font-weight:700;z-index:200;
+  opacity:0;transition:opacity 0.3s;pointer-events:none;
+}
+#notification.show{opacity:1}
+
+/* === Responsive === */
+@media(min-width:768px){
+  #neko-container{width:280px;height:300px}
+  #score-area{font-size:1.1em}
+}
+@media(min-width:1024px){
+  body{max-width:480px;margin:0 auto;border-radius:16px;
+    box-shadow:0 0 40px rgba(0,0,0,0.5);min-height:90dvh;margin-top:5dvh}
+}
+@media(prefers-reduced-motion:reduce){
+  .shake,.purring{animation:none !important}
+  .particle,.heart-float{animation:none !important;display:none !important}
+  #punch-area.rainbow{animation:none !important}
+  *{transition-duration:0.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <h1>怒れる猫パンチマシン</h1>
+  <div>
+    <button class="header-btn" id="btn-achievements">実績</button>
+    <button class="header-btn" id="btn-settings">設定</button>
+  </div>
+</div>
+
+<!-- Score Area -->
+<div id="score-area">
+  <div id="combo-display"></div>
+  <div id="score-display">SCORE: 0</div>
+  <div id="title-display"></div>
+</div>
+
+<!-- Punch Area -->
+<div id="punch-area">
+  <div id="neko-container">
+    <svg id="neko" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- Tail -->
+      <path id="tail" d="M155,165 Q175,140 170,115" fill="none" stroke="#f5a623" stroke-width="6" stroke-linecap="round"/>
+      <!-- Body -->
+      <ellipse cx="100" cy="160" rx="50" ry="38" fill="#f5a623"/>
+      <!-- Head -->
+      <g id="head">
+        <circle cx="100" cy="90" r="42" fill="#f5a623"/>
+        <!-- Ears -->
+        <polygon points="63,58 73,22 86,55" fill="#f5a623"/>
+        <polygon points="114,55 127,22 137,58" fill="#f5a623"/>
+        <polygon points="66,55 73,28 83,53" fill="#ffb6c1"/>
+        <polygon points="117,53 127,28 134,55" fill="#ffb6c1"/>
+        <!-- Eyes (angry default) -->
+        <g id="eyes">
+          <ellipse id="eye-l" cx="83" cy="85" rx="5" ry="6" fill="#333"/>
+          <ellipse id="eye-r" cx="117" cy="85" rx="5" ry="6" fill="#333"/>
+          <!-- Angry brows -->
+          <line id="brow-l" x1="73" y1="72" x2="90" y2="77" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+          <line id="brow-r" x1="127" y1="72" x2="110" y2="77" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+          <!-- Pupils (for glow states) -->
+          <circle id="pupil-l" cx="84" cy="84" r="2" fill="#fff"/>
+          <circle id="pupil-r" cx="118" cy="84" r="2" fill="#fff"/>
+        </g>
+        <!-- Nose -->
+        <ellipse cx="100" cy="95" rx="3.5" ry="2.5" fill="#ff6b81"/>
+        <!-- Mouth (angry default) -->
+        <path id="mouth" d="M100,98 Q92,104 87,101" fill="none" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+        <path id="mouth2" d="M100,98 Q108,104 113,101" fill="none" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- Whiskers -->
+        <line x1="58" y1="88" x2="78" y2="92" stroke="#333" stroke-width="1"/>
+        <line x1="58" y1="96" x2="78" y2="96" stroke="#333" stroke-width="1"/>
+        <line x1="122" y1="92" x2="142" y2="88" stroke="#333" stroke-width="1"/>
+        <line x1="122" y1="96" x2="142" y2="96" stroke="#333" stroke-width="1"/>
+      </g>
+      <!-- Paws -->
+      <g id="paw-left">
+        <ellipse cx="68" cy="172" rx="14" ry="9" fill="#f5a623"/>
+        <circle cx="63" cy="172" r="2.5" fill="#ffb6c1"/>
+        <circle cx="68" cy="169" r="2.5" fill="#ffb6c1"/>
+        <circle cx="73" cy="172" r="2.5" fill="#ffb6c1"/>
+      </g>
+      <g id="paw-right">
+        <ellipse cx="132" cy="172" rx="14" ry="9" fill="#f5a623"/>
+        <circle cx="127" cy="172" r="2.5" fill="#ffb6c1"/>
+        <circle cx="132" cy="169" r="2.5" fill="#ffb6c1"/>
+        <circle cx="137" cy="172" r="2.5" fill="#ffb6c1"/>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<!-- Quote Area -->
+<div id="quote-area">
+  <div id="quote-bubble">画面をタップして猫パンチ!</div>
+  <button id="fav-btn" title="お気に入り">&#9825;</button>
+</div>
+
+<!-- Footer -->
+<div id="footer">
+  <span id="total-display">累計: 0パンチ</span>
+  <span id="best-combo-display">BEST: 0コンボ</span>
+</div>
+
+<!-- Notification -->
+<div id="notification"></div>
+
+<!-- Achievements Modal -->
+<div class="modal-overlay" id="modal-achievements">
+  <div class="modal">
+    <h2>実績</h2>
+    <div id="achievements-list"></div>
+    <button class="modal-close" id="close-achievements">閉じる</button>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal">
+    <h2>設定</h2>
+    <div class="toggle-row">
+      <span>サウンド</span>
+      <div class="toggle-switch on" id="toggle-sound"></div>
+    </div>
+    <div class="toggle-row">
+      <span>バイブレーション</span>
+      <div class="toggle-switch on" id="toggle-vibration"></div>
+    </div>
+    <hr style="border-color:rgba(255,255,255,0.1);margin:12px 0">
+    <button class="modal-close" id="btn-reset-data" style="color:#ff6348;border-color:#ff6348">データリセット</button>
+    <button class="modal-close" id="close-settings">閉じる</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   怒れる猫パンチマシン — Single-file Web App
+   ============================================================ */
+const NekoPunch = {};
+
+/* ─── Storage Module ─── */
+NekoPunch.Storage = (() => {
+  const KEY = 'neko-punch-data';
+  const DEFAULTS = {
+    version: 1,
+    totalPunches: 0,
+    highScore: 0,
+    maxCombo: 0,
+    purrCount: 0,
+    achievements: [],
+    favoriteQuotes: [],
+    playDates: [],
+    streak: 0,
+    lateNightPlay: false,
+    maxPPS: 0,
+    settings: { soundEnabled: true, vibrationEnabled: true }
+  };
+  let available = true;
+  let state = null;
+
+  function init() {
+    try {
+      localStorage.setItem('__test__', '1');
+      localStorage.removeItem('__test__');
+    } catch {
+      available = false;
+      NekoPunch.UI.notify('データ保存が利用できません');
+    }
+    state = load();
+    updateStreak();
+    return state;
+  }
+
+  function load() {
+    if (!available) return { ...DEFAULTS };
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return { ...DEFAULTS, settings: { ...DEFAULTS.settings } };
+      const d = JSON.parse(raw);
+      return validate(d);
+    } catch {
+      return { ...DEFAULTS, settings: { ...DEFAULTS.settings } };
+    }
+  }
+
+  function validate(d) {
+    const s = { ...DEFAULTS, settings: { ...DEFAULTS.settings } };
+    if (typeof d !== 'object' || d === null) return s;
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, typeof v === 'number' && isFinite(v) ? Math.floor(v) : 0));
+    s.totalPunches = clamp(d.totalPunches, 0, 1e8);
+    s.highScore = clamp(d.highScore, 0, 1e10);
+    s.maxCombo = clamp(d.maxCombo, 0, 1e5);
+    s.purrCount = clamp(d.purrCount, 0, 1e5);
+    s.streak = clamp(d.streak, 0, 3650);
+    s.maxPPS = clamp(d.maxPPS, 0, 100);
+    s.lateNightPlay = d.lateNightPlay === true;
+    s.achievements = Array.isArray(d.achievements) ? d.achievements.filter(a => typeof a === 'string') : [];
+    s.favoriteQuotes = Array.isArray(d.favoriteQuotes) ? d.favoriteQuotes.filter(i => typeof i === 'number' && i >= 0) : [];
+    s.playDates = Array.isArray(d.playDates) ? d.playDates.filter(p => typeof p === 'string').slice(-365) : [];
+    if (d.settings && typeof d.settings === 'object') {
+      s.settings.soundEnabled = d.settings.soundEnabled !== false;
+      s.settings.vibrationEnabled = d.settings.vibrationEnabled !== false;
+    }
+    return s;
+  }
+
+  function save() {
+    if (!available || !state) return;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota exceeded */ }
+  }
+
+  function updateStreak() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!state.playDates.includes(today)) {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      if (state.playDates.includes(yesterday)) {
+        state.streak++;
+      } else {
+        state.streak = 1;
+      }
+      state.playDates.push(today);
+      if (state.playDates.length > 365) state.playDates = state.playDates.slice(-365);
+    }
+  }
+
+  function get() { return state; }
+  function reset() { state = { ...DEFAULTS, settings: { ...DEFAULTS.settings } }; save(); }
+
+  return { init, save, get, reset };
+})();
+
+/* ─── Sound Module ─── */
+NekoPunch.Sound = (() => {
+  let ctx = null;
+  let initialized = false;
+  let enabled = true;
+
+  function init() {
+    if (initialized) return;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {
+          enabled = false;
+          NekoPunch.UI.notify('音声を再生できません');
+        });
+      }
+      initialized = true;
+    } catch {
+      enabled = false;
+    }
+  }
+
+  function setEnabled(v) { enabled = v; }
+  function isEnabled() { return enabled; }
+
+  function createNoise(duration) {
+    if (!ctx) return null;
+    const sr = ctx.sampleRate;
+    const len = sr * duration;
+    const buf = ctx.createBuffer(1, len, sr);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function playPunch(intensity) {
+    if (!ctx || !enabled) return;
+    const now = ctx.currentTime;
+    const int = Math.min(intensity, 3);
+
+    // Noise burst
+    const noise = ctx.createBufferSource();
+    noise.buffer = createNoise(0.05);
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.25 * int, now);
+    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    noise.connect(ng).connect(ctx.destination);
+    noise.start(now);
+
+    // Low impact
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120 + 30 * int, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.3 * int, now);
+    og.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(og).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  }
+
+  function playComboTick(combo) {
+    if (!ctx || !enabled) return;
+    const now = ctx.currentTime;
+    const freq = 261.63 * Math.pow(2, (combo % 12) / 12);
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.15, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.12);
+  }
+
+  function playPurr(duration) {
+    if (!ctx || !enabled) return;
+    const now = ctx.currentTime;
+    const dur = (duration || 3000) / 1000;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(27, now);
+    const lfo = ctx.createOscillator();
+    lfo.frequency.setValueAtTime(5, now);
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.setValueAtTime(0.15, now);
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.2, now);
+    masterGain.gain.linearRampToValueAtTime(0.001, now + dur);
+    lfo.connect(lfoGain);
+    lfoGain.connect(masterGain.gain);
+    osc.connect(masterGain).connect(ctx.destination);
+    lfo.start(now);
+    osc.start(now);
+    osc.stop(now + dur);
+    lfo.stop(now + dur);
+  }
+
+  function playAchievement() {
+    if (!ctx || !enabled) return;
+    const now = ctx.currentTime;
+    [261.63, 329.63, 392, 523.25].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.1);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.2, now + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.3);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(now + i * 0.1);
+      osc.stop(now + i * 0.1 + 0.35);
+    });
+  }
+
+  return { init, setEnabled, isEnabled, playPunch, playComboTick, playPurr, playAchievement };
+})();
+
+/* ─── Render Module ─── */
+NekoPunch.Render = (() => {
+  const $ = id => document.getElementById(id);
+  let currentFace = 'angry';
+
+  function setFace(type) {
+    if (currentFace === type) return;
+    currentFace = type;
+    const eyeL = $('eye-l'), eyeR = $('eye-r');
+    const browL = $('brow-l'), browR = $('brow-r');
+    const mouth = $('mouth'), mouth2 = $('mouth2');
+    const eyes = $('eyes');
+
+    // Reset
+    eyes.style.animation = '';
+    eyes.style.filter = '';
+
+    switch (type) {
+      case 'angry':
+        eyeL.setAttribute('rx', '5'); eyeL.setAttribute('ry', '6');
+        eyeR.setAttribute('rx', '5'); eyeR.setAttribute('ry', '6');
+        browL.setAttribute('x1', '73'); browL.setAttribute('y1', '72');
+        browL.setAttribute('x2', '90'); browL.setAttribute('y2', '77');
+        browR.setAttribute('x1', '127'); browR.setAttribute('y1', '72');
+        browR.setAttribute('x2', '110'); browR.setAttribute('y2', '77');
+        browL.style.display = ''; browR.style.display = '';
+        mouth.setAttribute('d', 'M100,98 Q92,104 87,101');
+        mouth2.setAttribute('d', 'M100,98 Q108,104 113,101');
+        break;
+      case 'punch':
+        eyeL.setAttribute('rx', '7'); eyeL.setAttribute('ry', '7');
+        eyeR.setAttribute('rx', '7'); eyeR.setAttribute('ry', '7');
+        browL.setAttribute('y1', '70'); browR.setAttribute('y1', '70');
+        mouth.setAttribute('d', 'M100,98 Q92,108 87,105');
+        mouth2.setAttribute('d', 'M100,98 Q108,108 113,105');
+        break;
+      case 'combo':
+        eyeL.setAttribute('rx', '6'); eyeL.setAttribute('ry', '6');
+        eyeR.setAttribute('rx', '6'); eyeR.setAttribute('ry', '6');
+        eyes.style.animation = 'glow-eyes 0.5s infinite';
+        browL.setAttribute('y1', '69'); browR.setAttribute('y1', '69');
+        mouth.setAttribute('d', 'M100,98 Q90,106 85,100');
+        mouth2.setAttribute('d', 'M100,98 Q110,106 115,100');
+        break;
+      case 'purr':
+        eyeL.setAttribute('rx', '6'); eyeL.setAttribute('ry', '1.5');
+        eyeR.setAttribute('rx', '6'); eyeR.setAttribute('ry', '1.5');
+        browL.style.display = 'none'; browR.style.display = 'none';
+        // omega mouth
+        mouth.setAttribute('d', 'M92,100 Q96,108 100,100');
+        mouth2.setAttribute('d', 'M100,100 Q104,108 108,100');
+        break;
+    }
+  }
+
+  function triggerPunch(isLeft) {
+    const container = $('neko-container');
+    const cls = isLeft ? 'punch-left' : 'punch-right';
+    container.classList.remove('punch-left', 'punch-right');
+    void container.offsetWidth; // force reflow
+    container.classList.add(cls);
+    setTimeout(() => container.classList.remove(cls), 200);
+  }
+
+  function spawnPopText(x, y, text) {
+    const el = document.createElement('div');
+    el.className = 'pop-text';
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    $('punch-area').appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function spawnHeart(baseX, baseY) {
+    const el = document.createElement('div');
+    el.className = 'heart-float';
+    el.textContent = ['❤', '💕', '💖', '💗'][Math.random() * 4 | 0];
+    el.style.left = (baseX + (Math.random() - 0.5) * 80) + 'px';
+    el.style.top = baseY + 'px';
+    $('punch-area').appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function spawnParticle(x, y) {
+    const el = document.createElement('div');
+    el.className = 'particle';
+    el.textContent = ['★', '✦', '🐾', '💥'][Math.random() * 4 | 0];
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 80;
+    el.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    el.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    $('punch-area').appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function setComboEffects(combo) {
+    const area = $('punch-area');
+    const container = $('neko-container');
+    area.classList.remove('shake', 'fire', 'rainbow');
+    container.classList.remove('big', 'purring');
+
+    if (combo >= 30) {
+      area.classList.add('rainbow');
+      container.classList.add('big');
+      container.style.animation = 'spin-punch 2s linear infinite';
+    } else if (combo >= 20) {
+      area.classList.add('shake', 'fire');
+      container.classList.add('big');
+      container.style.animation = '';
+    } else if (combo >= 10) {
+      area.classList.add('fire');
+      container.style.animation = '';
+    } else if (combo >= 5) {
+      area.classList.add('shake');
+      container.style.animation = '';
+    } else {
+      container.style.animation = '';
+    }
+  }
+
+  function startPurring() {
+    const container = $('neko-container');
+    container.classList.remove('big');
+    container.style.animation = '';
+    container.classList.add('purring');
+    setFace('purr');
+
+    const area = $('punch-area');
+    area.classList.remove('shake', 'fire', 'rainbow');
+    area.style.backgroundColor = 'rgba(255,182,193,0.1)';
+
+    const rect = container.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top;
+    for (let i = 0; i < 7; i++) {
+      setTimeout(() => spawnHeart(cx, cy), i * 150);
+    }
+  }
+
+  function stopPurring() {
+    const container = $('neko-container');
+    container.classList.remove('purring');
+    $('punch-area').style.backgroundColor = '';
+    setFace('angry');
+  }
+
+  return { setFace, triggerPunch, spawnPopText, spawnHeart, spawnParticle, setComboEffects, startPurring, stopPurring };
+})();
+
+/* ─── Game Module ─── */
+NekoPunch.Game = (() => {
+  let combo = 0;
+  let score = 0;
+  let comboTimer = null;
+  let isLeft = true;
+  let punchTimes = [];
+  let isPurring = false;
+
+  const POP_TEXTS = ['バシッ!', 'ドカッ!', 'ガッ!', 'ニャッ!', 'パシッ!', 'ボカッ!'];
+
+  const COMBO_TIERS = [
+    { min: 0,  label: '' },
+    { min: 5,  label: 'にゃいす!', color: '#ffa502' },
+    { min: 10, label: 'すごいにゃ!', color: '#ff6348' },
+    { min: 20, label: '猫パンチ覚醒!', color: '#ff4757' },
+    { min: 30, label: '猫パンチ無双!!', color: '#ff0000' },
+    { min: 50, label: '伝説の猫拳!!!', color: '#ffd700' },
+  ];
+
+  const TITLES = [
+    { punches: 0,     title: '猫パンチ見習い' },
+    { punches: 50,    title: '猫パンチ入門者' },
+    { punches: 100,   title: '猫パンチ修行僧' },
+    { punches: 300,   title: '猫パンチ師範代' },
+    { punches: 500,   title: '猫パンチマスター' },
+    { punches: 1000,  title: '猫パンチ仙人' },
+    { punches: 2000,  title: '猫パンチ神' },
+    { punches: 5000,  title: '猫パンチを超えし者' },
+    { punches: 10000, title: '猫そのもの' },
+  ];
+
+  const ACHIEVEMENTS = [
+    { id: 'first_punch',   name: '初めての一撃',        icon: '👊', cond: s => s.totalPunches >= 1 },
+    { id: 'combo_10',      name: '10コンボ達成',         icon: '🔥', cond: s => s.maxCombo >= 10 },
+    { id: 'combo_30',      name: '30コンボ! 猫拳炸裂',   icon: '💥', cond: s => s.maxCombo >= 30 },
+    { id: 'combo_50',      name: '50コンボ! 伝説到達',   icon: '⚡', cond: s => s.maxCombo >= 50 },
+    { id: 'purr_first',    name: '初めてのゴロゴロ',     icon: '💕', cond: s => s.purrCount >= 1 },
+    { id: 'purr_10',       name: 'ゴロゴロマニア',       icon: '😻', cond: s => s.purrCount >= 10 },
+    { id: 'score_10000',   name: '1万点突破',            icon: '🏆', cond: s => s.highScore >= 10000 },
+    { id: 'daily_streak',  name: '3日連続猫パンチ',      icon: '📅', cond: s => s.streak >= 3 },
+    { id: 'night_owl',     name: '深夜の猫パンチャー',    icon: '🌙', cond: s => s.lateNightPlay },
+    { id: 'speed_demon',   name: '秒速10パンチ',         icon: '⚡', cond: s => s.maxPPS >= 10 },
+  ];
+
+  function getTitle(punches) {
+    let t = TITLES[0].title;
+    for (const tier of TITLES) {
+      if (punches >= tier.punches) t = tier.title;
+    }
+    return t;
+  }
+
+  function getComboTier(c) {
+    let tier = COMBO_TIERS[0];
+    for (const t of COMBO_TIERS) {
+      if (c >= t.min) tier = t;
+    }
+    return tier;
+  }
+
+  function punch(x, y) {
+    if (isPurring) return;
+
+    NekoPunch.Sound.init();
+    combo++;
+    const addScore = 10 + combo * 5;
+    score += addScore;
+
+    const state = NekoPunch.Storage.get();
+    state.totalPunches++;
+    if (score > state.highScore) state.highScore = score;
+    if (combo > state.maxCombo) state.maxCombo = combo;
+
+    // PPS tracking
+    const now = Date.now();
+    punchTimes.push(now);
+    punchTimes = punchTimes.filter(t => now - t < 1000);
+    if (punchTimes.length > state.maxPPS) state.maxPPS = punchTimes.length;
+
+    // Late night check
+    const hour = new Date().getHours();
+    if (hour >= 0 && hour < 5) state.lateNightPlay = true;
+
+    // Vibration
+    if (state.settings.vibrationEnabled && navigator.vibrate) {
+      navigator.vibrate(combo >= 10 ? 30 : 15);
+    }
+
+    // Visual
+    NekoPunch.Render.triggerPunch(isLeft);
+    isLeft = !isLeft;
+    NekoPunch.Render.spawnPopText(x, y, POP_TEXTS[Math.random() * POP_TEXTS.length | 0]);
+
+    if (combo >= 10) {
+      NekoPunch.Render.setFace('combo');
+      for (let i = 0; i < Math.min(combo / 10, 5); i++) {
+        NekoPunch.Render.spawnParticle(x + (Math.random() - 0.5) * 40, y + (Math.random() - 0.5) * 40);
+      }
+    } else {
+      NekoPunch.Render.setFace('punch');
+    }
+    NekoPunch.Render.setComboEffects(combo);
+
+    // Sound
+    const intensity = 1 + Math.min(combo, 30) / 15;
+    NekoPunch.Sound.playPunch(intensity);
+    NekoPunch.Sound.playComboTick(combo);
+
+    // Quote
+    if (combo >= 5) {
+      NekoPunch.UI.showQuote('combo');
+    }
+
+    // UI updates
+    const tier = getComboTier(combo);
+    NekoPunch.UI.updateCombo(combo, tier);
+    NekoPunch.UI.updateScore(score);
+    NekoPunch.UI.updateTitle(getTitle(state.totalPunches));
+    NekoPunch.UI.updateFooter(state.totalPunches, state.maxCombo);
+
+    // Check achievements
+    checkAchievements(state);
+
+    NekoPunch.Storage.save();
+
+    // Reset combo timer
+    clearTimeout(comboTimer);
+    comboTimer = setTimeout(() => endCombo(state), 1500);
+  }
+
+  function endCombo(state) {
+    const endedCombo = combo;
+    combo = 0;
+    score = 0;
+    NekoPunch.Render.setComboEffects(0);
+    NekoPunch.UI.updateCombo(0, COMBO_TIERS[0]);
+    NekoPunch.UI.updateScore(0);
+
+    if (endedCombo >= 10) {
+      // Purring!
+      isPurring = true;
+      state.purrCount++;
+      NekoPunch.Storage.save();
+      checkAchievements(state);
+
+      NekoPunch.Render.startPurring();
+      NekoPunch.Sound.playPurr(3000);
+      NekoPunch.UI.showQuote('purr');
+
+      setTimeout(() => {
+        NekoPunch.Render.stopPurring();
+        isPurring = false;
+        NekoPunch.UI.showQuote('normal');
+      }, 3000);
+    } else {
+      NekoPunch.Render.setFace('angry');
+      NekoPunch.UI.showQuote('normal');
+    }
+  }
+
+  function checkAchievements(state) {
+    for (const a of ACHIEVEMENTS) {
+      if (!state.achievements.includes(a.id) && a.cond(state)) {
+        state.achievements.push(a.id);
+        NekoPunch.Sound.playAchievement();
+        NekoPunch.UI.notify(`実績解除! ${a.icon} ${a.name}`);
+        NekoPunch.Storage.save();
+      }
+    }
+  }
+
+  function getAchievements() { return ACHIEVEMENTS; }
+
+  return { punch, getTitle, getAchievements };
+})();
+
+/* ─── Quotes Data ─── */
+NekoPunch.Quotes = (() => {
+  const normal = [
+    "おまえ、今日も生きてるだけで偉いぞ。…まあ当然だけどな",
+    "ストレス? そんなもん全部ここに置いてけ。…掃除はしないけど",
+    "落ち込んでるの? ふーん。…じゃあ、もっと強く叩け",
+    "にゃんも疲れたけど、おまえよりはマシだな。…たぶん",
+    "泣いていいぞ。…ただし猫の前では泣くな。毛が濡れる",
+    "おまえの悩み、猫に分かると思うか? …分からんけど聞いてやる",
+    "明日? 知らん。今日を生き延びろ。…ごはんはちゃんと食え",
+    "人間って大変だな。猫に生まれてよかった。…おまえも猫になれ",
+    "その顔、3日ぶりに見たけど…まあ、悪くないぞ",
+    "強く叩けば叩くほどいい? …いや画面は壊すなよ",
+    "おまえが来ると暇つぶしになる。…感謝しろ",
+    "サボってんじゃねーぞ。…ただし休むのは許可する",
+    "腹減った? 先に猫のごはんだろ。…まあおまえも食え",
+    "嫌なヤツのことは忘れろ。猫の方がかわいいだろ?",
+    "弱音を吐くのは構わん。…ここでだけな",
+    "100回叩いたら褒めてやる。…99回じゃダメだ",
+    "今日の仕事? 知らんけど、おまえならなんとかなるだろ。…たぶん",
+    "しょうがねーな…撫でさせてやるよ。…1回だけだぞ",
+    "人間はすぐ悩む。猫を見習え。寝ろ。",
+    "おまえ、猫パンチのセンスあるな。…褒めてないけど",
+  ];
+  const comboQuotes = [
+    "お、やるじゃん。…まだまだだけど",
+    "いいぞ、その調子! …で、いつ止まるの?",
+    "連打するなって言ってないけど…すごいな",
+    "ちょ、速くない!? …嫌いじゃないけど",
+    "おまえ、怒ってるだろ。…全部出し切れ",
+  ];
+  const purrQuotes = [
+    "…ゴロゴロ…べ、別に甘えてないし…ゴロゴロ…",
+    "たくさん叩いたな。…疲れただろ。…ここに座れ",
+    "…おまえ、意外とがんばり屋だな。……褒めてないけど",
+    "ゴロゴロ…これは生理現象であって…ゴロゴロ…",
+    "ちょっとだけ…ほんのちょっとだけ…好きかも。…聞こえた? 気のせいだ",
+    "おまえが来ないと…いや、別に寂しくないけど…明日も来い",
+    "よしよし…って猫がおまえを慰めてどうする…ゴロゴロ…",
+  ];
+
+  function getRandom(type) {
+    const arr = type === 'combo' ? comboQuotes : type === 'purr' ? purrQuotes : normal;
+    return { text: arr[Math.random() * arr.length | 0], index: -1 };
+  }
+
+  function getAll() { return normal; }
+
+  return { getRandom, getAll };
+})();
+
+/* ─── UI Module ─── */
+NekoPunch.UI = (() => {
+  const $ = id => document.getElementById(id);
+  let currentQuoteIndex = -1;
+  let notifyTimer = null;
+
+  function init() {
+    const state = NekoPunch.Storage.get();
+
+    // Pointer event (unified input)
+    $('punch-area').addEventListener('pointerdown', e => {
+      e.preventDefault();
+      NekoPunch.Game.punch(e.clientX, e.clientY);
+    });
+
+    // Buttons
+    $('btn-achievements').addEventListener('pointerdown', e => { e.stopPropagation(); showAchievements(); });
+    $('btn-settings').addEventListener('pointerdown', e => { e.stopPropagation(); showSettings(); });
+    $('close-achievements').addEventListener('pointerdown', e => { e.stopPropagation(); $('modal-achievements').classList.remove('active'); });
+    $('close-settings').addEventListener('pointerdown', e => { e.stopPropagation(); $('modal-settings').classList.remove('active'); });
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('pointerdown', e => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+    });
+
+    $('fav-btn').addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      toggleFavorite();
+    });
+
+    // Settings toggles
+    $('toggle-sound').addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      const el = $('toggle-sound');
+      el.classList.toggle('on');
+      state.settings.soundEnabled = el.classList.contains('on');
+      NekoPunch.Sound.setEnabled(state.settings.soundEnabled);
+      NekoPunch.Storage.save();
+    });
+
+    $('toggle-vibration').addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      const el = $('toggle-vibration');
+      el.classList.toggle('on');
+      state.settings.vibrationEnabled = el.classList.contains('on');
+      NekoPunch.Storage.save();
+    });
+
+    $('btn-reset-data').addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      if (confirm('全データをリセットしますか?')) {
+        NekoPunch.Storage.reset();
+        location.reload();
+      }
+    });
+
+    // Apply saved settings
+    if (!state.settings.soundEnabled) {
+      $('toggle-sound').classList.remove('on');
+      NekoPunch.Sound.setEnabled(false);
+    }
+    if (!state.settings.vibrationEnabled) {
+      $('toggle-vibration').classList.remove('on');
+    }
+
+    // Initial display
+    updateTitle(NekoPunch.Game.getTitle(state.totalPunches));
+    updateFooter(state.totalPunches, state.maxCombo);
+    showQuote('normal');
+  }
+
+  function updateCombo(combo, tier) {
+    const el = $('combo-display');
+    if (combo === 0) {
+      el.textContent = '';
+      el.style.color = '';
+      el.style.fontSize = '';
+      return;
+    }
+    el.textContent = (tier.label ? tier.label + ' ' : '') + combo + ' COMBO';
+    el.style.color = tier.color || '#fff';
+    const size = 1.5 + Math.min(combo, 50) * 0.04;
+    el.style.fontSize = size + 'rem';
+  }
+
+  function updateScore(s) {
+    $('score-display').textContent = 'SCORE: ' + s.toLocaleString();
+  }
+
+  function updateTitle(title) {
+    $('title-display').textContent = title;
+  }
+
+  function updateFooter(total, bestCombo) {
+    $('total-display').textContent = '累計: ' + total.toLocaleString() + 'パンチ';
+    $('best-combo-display').textContent = 'BEST: ' + bestCombo + 'コンボ';
+  }
+
+  function showQuote(type) {
+    const q = NekoPunch.Quotes.getRandom(type);
+    $('quote-bubble').textContent = '「' + q.text + '」';
+    currentQuoteIndex = NekoPunch.Quotes.getAll().indexOf(q.text);
+    updateFavBtn();
+  }
+
+  function toggleFavorite() {
+    if (currentQuoteIndex < 0) return;
+    const state = NekoPunch.Storage.get();
+    const idx = state.favoriteQuotes.indexOf(currentQuoteIndex);
+    if (idx >= 0) {
+      state.favoriteQuotes.splice(idx, 1);
+    } else {
+      state.favoriteQuotes.push(currentQuoteIndex);
+    }
+    NekoPunch.Storage.save();
+    updateFavBtn();
+  }
+
+  function updateFavBtn() {
+    const state = NekoPunch.Storage.get();
+    const isFav = currentQuoteIndex >= 0 && state.favoriteQuotes.includes(currentQuoteIndex);
+    const btn = $('fav-btn');
+    btn.innerHTML = isFav ? '&#9829;' : '&#9825;';
+    btn.classList.toggle('active', isFav);
+  }
+
+  function showAchievements() {
+    const state = NekoPunch.Storage.get();
+    const list = $('achievements-list');
+    list.innerHTML = '';
+    for (const a of NekoPunch.Game.getAchievements()) {
+      const unlocked = state.achievements.includes(a.id);
+      const div = document.createElement('div');
+      div.className = 'achievement-item' + (unlocked ? '' : ' locked');
+      div.innerHTML = `<span style="font-size:1.3rem">${a.icon}</span><span>${a.name}</span>`;
+      list.appendChild(div);
+    }
+    $('modal-achievements').classList.add('active');
+  }
+
+  function showSettings() {
+    $('modal-settings').classList.add('active');
+  }
+
+  function notify(text) {
+    const el = $('notification');
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(notifyTimer);
+    notifyTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  return { init, updateCombo, updateScore, updateTitle, updateFooter, showQuote, notify };
+})();
+
+/* ─── Init ─── */
+NekoPunch.Storage.init();
+NekoPunch.UI.init();
+</script>
+</body>
+</html>
