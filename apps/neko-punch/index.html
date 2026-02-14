@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>怒れる猫パンチマシン</title>
+<title>猫パンチマシン</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
@@ -19,7 +19,7 @@ body{
 /* === Header === */
 #header{
   display:flex;justify-content:space-between;align-items:center;
-  padding:8px 16px;flex-shrink:0;z-index:10;
+  padding:8px 16px;flex-shrink:0;z-index:70;position:relative;
 }
 #header h1{font-size:1rem;color:#f5a623;letter-spacing:0.05em}
 .header-btn{
@@ -28,20 +28,18 @@ body{
 }
 .header-btn:hover{background:rgba(255,255,255,0.1)}
 
-/* === Score Area === */
-#score-area{
-  text-align:center;padding:4px 16px;flex-shrink:0;
+/* === Combo Display (top) === */
+#combo-area{
+  text-align:center;padding:4px 16px;flex-shrink:0;min-height:2.5rem;
 }
 #combo-display{
   font-size:1.5rem;font-weight:900;
   transition:all 0.15s ease;min-height:2rem;
 }
-#score-display{font-size:0.9rem;opacity:0.8}
-#title-display{font-size:0.8rem;color:#f5a623;margin-top:2px}
 
 /* === Punch Area === */
 #punch-area{
-  flex:1;display:flex;align-items:center;justify-content:center;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   position:relative;overflow:hidden;
   transition:background-color 0.3s ease;
 }
@@ -132,32 +130,79 @@ body{
   position:absolute;pointer-events:none;font-size:1.2rem;
   animation:particle-fly 0.6s ease-out forwards;
 }
+.critical-flash{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at center,rgba(255,215,0,0.4),transparent 70%);
+  animation:critical-flash-anim 0.3s ease-out forwards;
+}
+@keyframes critical-flash-anim{
+  0%{opacity:1;transform:scale(0.5)}
+  50%{opacity:0.8;transform:scale(1.2)}
+  100%{opacity:0;transform:scale(1.5)}
+}
 
-/* === Quote Area === */
-#quote-area{
-  padding:12px 20px;flex-shrink:0;text-align:center;
-  min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+/* === Cat Speech Bubble (below cat) === */
+#cat-speech{
+  margin-top:8px;text-align:center;pointer-events:none;
+  min-height:48px;display:flex;align-items:center;justify-content:center;
 }
 #quote-bubble{
-  background:rgba(255,255,255,0.08);border-radius:16px;
-  padding:12px 20px;max-width:360px;position:relative;
-  font-size:0.9rem;line-height:1.5;
+  background:rgba(255,255,255,0.1);border-radius:16px;
+  padding:10px 20px;max-width:320px;position:relative;
+  font-size:1.15rem;line-height:1.4;font-weight:600;
+  transition:opacity 0.2s;
 }
 #quote-bubble::before{
   content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);
   border-left:8px solid transparent;border-right:8px solid transparent;
-  border-bottom:8px solid rgba(255,255,255,0.08);
+  border-bottom:8px solid rgba(255,255,255,0.1);
 }
-#fav-btn{
-  background:none;border:none;cursor:pointer;font-size:1.2rem;
-  margin-top:4px;opacity:0.5;transition:opacity 0.2s;
-}
-#fav-btn.active{opacity:1}
 
 /* === Footer === */
 #footer{
   display:flex;justify-content:center;gap:16px;
   padding:8px 16px;font-size:0.7rem;opacity:0.5;flex-shrink:0;
+}
+
+/* === Result Overlay === */
+#result-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.75);
+  z-index:50;align-items:center;justify-content:center;
+  flex-direction:column;
+}
+#result-overlay.active{display:flex}
+#result-card{
+  background:linear-gradient(135deg,#16213e,#1a1a2e);
+  border:2px solid #f5a623;border-radius:20px;
+  padding:28px 36px;text-align:center;
+  min-width:260px;max-width:340px;
+  animation:result-pop 0.4s ease-out;
+}
+@keyframes result-pop{
+  0%{opacity:0;transform:scale(0.7)}
+  60%{transform:scale(1.05)}
+  100%{opacity:1;transform:scale(1)}
+}
+#result-card h2{
+  font-size:1.2rem;color:#f5a623;margin-bottom:16px;
+}
+.result-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;font-size:1rem;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.result-row:last-of-type{border-bottom:none}
+.result-label{opacity:0.7;font-size:0.85rem}
+.result-value{font-weight:800;color:#fff}
+.result-value.highlight{color:#f5a623;font-size:1.2rem}
+#result-title{
+  margin-top:14px;padding:8px 16px;
+  background:rgba(245,166,35,0.15);border-radius:10px;
+  color:#f5a623;font-weight:700;font-size:1rem;
+}
+#result-tap-hint{
+  margin-top:16px;font-size:0.75rem;opacity:0.5;
 }
 
 /* === Modals === */
@@ -197,6 +242,39 @@ body{
 }
 .toggle-switch.on::after{transform:translateX(20px)}
 
+/* === Start Overlay === */
+#start-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:60;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;text-align:center;
+}
+#start-overlay.hidden{display:none}
+#start-message{
+  font-size:1.6rem;font-weight:900;color:#f5a623;
+  line-height:1.6;padding:0 24px;
+}
+#start-hint{
+  margin-top:16px;font-size:1rem;opacity:0.6;
+  animation:blink-hint 1.5s ease-in-out infinite;
+}
+@keyframes blink-hint{
+  0%,100%{opacity:0.4}
+  50%{opacity:1}
+}
+
+/* === Timer Display === */
+#timer-display{
+  text-align:center;padding:4px 0;flex-shrink:0;
+  font-size:2rem;font-weight:900;color:#f5a623;
+  min-height:2.5rem;
+}
+#timer-display.urgent{color:#ff4757;animation:timer-pulse 0.5s infinite}
+@keyframes timer-pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.15)}
+}
+
 /* === Notification === */
 #notification{
   position:fixed;top:16px;left:50%;transform:translateX(-50%);
@@ -209,7 +287,6 @@ body{
 /* === Responsive === */
 @media(min-width:768px){
   #neko-container{width:280px;height:300px}
-  #score-area{font-size:1.1em}
 }
 @media(min-width:1024px){
   body{max-width:480px;margin:0 auto;border-radius:16px;
@@ -227,21 +304,22 @@ body{
 
 <!-- Header -->
 <div id="header">
-  <h1>怒れる猫パンチマシン</h1>
+  <h1>猫パンチマシン</h1>
   <div>
     <button class="header-btn" id="btn-achievements">実績</button>
     <button class="header-btn" id="btn-settings">設定</button>
   </div>
 </div>
 
-<!-- Score Area -->
-<div id="score-area">
+<!-- Timer Display -->
+<div id="timer-display"></div>
+
+<!-- Combo Display (top) -->
+<div id="combo-area">
   <div id="combo-display"></div>
-  <div id="score-display">SCORE: 0</div>
-  <div id="title-display"></div>
 </div>
 
-<!-- Punch Area -->
+<!-- Punch Area (cat + speech bubble) -->
 <div id="punch-area">
   <div id="neko-container">
     <svg id="neko" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
@@ -294,18 +372,43 @@ body{
       </g>
     </svg>
   </div>
-</div>
-
-<!-- Quote Area -->
-<div id="quote-area">
-  <div id="quote-bubble">画面をタップして猫パンチ!</div>
-  <button id="fav-btn" title="お気に入り">&#9825;</button>
+  <!-- Speech bubble directly below cat -->
+  <div id="cat-speech">
+    <div id="quote-bubble">準備はいいか?</div>
+  </div>
 </div>
 
 <!-- Footer -->
 <div id="footer">
   <span id="total-display">累計: 0パンチ</span>
   <span id="best-combo-display">BEST: 0コンボ</span>
+</div>
+
+<!-- Result Overlay -->
+<div id="result-overlay">
+  <div id="result-card">
+    <h2>結果発表</h2>
+    <div class="result-row">
+      <span class="result-label">コンボ</span>
+      <span class="result-value highlight" id="result-combo">0</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">スコア</span>
+      <span class="result-value" id="result-score">0</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">ベストコンボ</span>
+      <span class="result-value" id="result-best">0</span>
+    </div>
+    <div id="result-title">猫パンチ見習い</div>
+    <div id="result-tap-hint">タップして閉じる</div>
+  </div>
+</div>
+
+<!-- Start Overlay -->
+<div id="start-overlay">
+  <div id="start-message">10秒以内に<br>できる限りパンチ!!</div>
+  <div id="start-hint">～パンチすると始まります～</div>
 </div>
 
 <!-- Notification -->
@@ -340,7 +443,7 @@ body{
 
 <script>
 /* ============================================================
-   怒れる猫パンチマシン — Single-file Web App
+   猫パンチマシン — Single-file Web App
    ============================================================ */
 const NekoPunch = {};
 
@@ -475,7 +578,6 @@ NekoPunch.Sound = (() => {
     const now = ctx.currentTime;
     const int = Math.min(intensity, 3);
 
-    // Noise burst
     const noise = ctx.createBufferSource();
     noise.buffer = createNoise(0.05);
     const ng = ctx.createGain();
@@ -484,7 +586,6 @@ NekoPunch.Sound = (() => {
     noise.connect(ng).connect(ctx.destination);
     noise.start(now);
 
-    // Low impact
     const osc = ctx.createOscillator();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(120 + 30 * int, now);
@@ -551,7 +652,23 @@ NekoPunch.Sound = (() => {
     });
   }
 
-  return { init, setEnabled, isEnabled, playPunch, playComboTick, playPurr, playAchievement };
+  function playResult() {
+    if (!ctx || !enabled) return;
+    const now = ctx.currentTime;
+    [392, 523.25, 659.25, 783.99].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.12);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.18, now + i * 0.12);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.45);
+    });
+  }
+
+  return { init, setEnabled, isEnabled, playPunch, playComboTick, playPurr, playAchievement, playResult };
 })();
 
 /* ─── Render Module ─── */
@@ -559,8 +676,8 @@ NekoPunch.Render = (() => {
   const $ = id => document.getElementById(id);
   let currentFace = 'angry';
 
-  function setFace(type) {
-    if (currentFace === type) return;
+  function setFace(type, force) {
+    if (!force && currentFace === type) return;
     currentFace = type;
     const eyeL = $('eye-l'), eyeR = $('eye-r');
     const browL = $('brow-l'), browR = $('brow-r');
@@ -570,31 +687,73 @@ NekoPunch.Render = (() => {
     // Reset
     eyes.style.animation = '';
     eyes.style.filter = '';
+    browL.style.display = ''; browR.style.display = '';
+    browL.setAttribute('x1', '73'); browL.setAttribute('x2', '90');
+    browR.setAttribute('x1', '127'); browR.setAttribute('x2', '110');
 
     switch (type) {
       case 'angry':
         eyeL.setAttribute('rx', '5'); eyeL.setAttribute('ry', '6');
         eyeR.setAttribute('rx', '5'); eyeR.setAttribute('ry', '6');
-        browL.setAttribute('x1', '73'); browL.setAttribute('y1', '72');
-        browL.setAttribute('x2', '90'); browL.setAttribute('y2', '77');
-        browR.setAttribute('x1', '127'); browR.setAttribute('y1', '72');
-        browR.setAttribute('x2', '110'); browR.setAttribute('y2', '77');
-        browL.style.display = ''; browR.style.display = '';
+        browL.setAttribute('y1', '72'); browL.setAttribute('y2', '77');
+        browR.setAttribute('y1', '72'); browR.setAttribute('y2', '77');
         mouth.setAttribute('d', 'M100,98 Q92,104 87,101');
         mouth2.setAttribute('d', 'M100,98 Q108,104 113,101');
         break;
       case 'punch':
         eyeL.setAttribute('rx', '7'); eyeL.setAttribute('ry', '7');
         eyeR.setAttribute('rx', '7'); eyeR.setAttribute('ry', '7');
-        browL.setAttribute('y1', '70'); browR.setAttribute('y1', '70');
+        browL.setAttribute('y1', '70'); browL.setAttribute('y2', '77');
+        browR.setAttribute('y1', '70'); browR.setAttribute('y2', '77');
         mouth.setAttribute('d', 'M100,98 Q92,108 87,105');
         mouth2.setAttribute('d', 'M100,98 Q108,108 113,105');
+        break;
+      case 'surprised':
+        eyeL.setAttribute('rx', '8'); eyeL.setAttribute('ry', '8');
+        eyeR.setAttribute('rx', '8'); eyeR.setAttribute('ry', '8');
+        browL.setAttribute('y1', '66'); browL.setAttribute('y2', '72');
+        browR.setAttribute('y1', '66'); browR.setAttribute('y2', '72');
+        mouth.setAttribute('d', 'M95,100 Q97,112 100,112');
+        mouth2.setAttribute('d', 'M100,112 Q103,112 105,100');
+        break;
+      case 'smirk':
+        eyeL.setAttribute('rx', '5'); eyeL.setAttribute('ry', '6');
+        eyeR.setAttribute('rx', '6'); eyeR.setAttribute('ry', '2');
+        browL.setAttribute('y1', '72'); browL.setAttribute('y2', '77');
+        browR.setAttribute('y1', '74'); browR.setAttribute('y2', '76');
+        mouth.setAttribute('d', 'M100,98 Q90,103 85,99');
+        mouth2.setAttribute('d', 'M100,98 Q112,106 118,101');
+        break;
+      case 'fury':
+        eyeL.setAttribute('rx', '4'); eyeL.setAttribute('ry', '3');
+        eyeR.setAttribute('rx', '4'); eyeR.setAttribute('ry', '3');
+        eyes.style.animation = 'glow-eyes 0.3s infinite';
+        browL.setAttribute('y1', '70'); browL.setAttribute('y2', '79');
+        browR.setAttribute('y1', '70'); browR.setAttribute('y2', '79');
+        mouth.setAttribute('d', 'M93,98 Q96,110 100,100');
+        mouth2.setAttribute('d', 'M100,100 Q104,110 107,98');
+        break;
+      case 'wink':
+        eyeL.setAttribute('rx', '6'); eyeL.setAttribute('ry', '1.5');
+        eyeR.setAttribute('rx', '5'); eyeR.setAttribute('ry', '6');
+        browL.style.display = 'none';
+        browR.setAttribute('y1', '72'); browR.setAttribute('y2', '77');
+        mouth.setAttribute('d', 'M100,98 Q92,106 87,102');
+        mouth2.setAttribute('d', 'M100,98 Q108,106 113,102');
+        break;
+      case 'dizzy':
+        eyeL.setAttribute('rx', '3'); eyeL.setAttribute('ry', '3');
+        eyeR.setAttribute('rx', '3'); eyeR.setAttribute('ry', '3');
+        browL.style.display = 'none'; browR.style.display = 'none';
+        mouth.setAttribute('d', 'M94,102 Q97,108 100,102');
+        mouth2.setAttribute('d', 'M100,102 Q103,108 106,102');
         break;
       case 'combo':
         eyeL.setAttribute('rx', '6'); eyeL.setAttribute('ry', '6');
         eyeR.setAttribute('rx', '6'); eyeR.setAttribute('ry', '6');
         eyes.style.animation = 'glow-eyes 0.5s infinite';
-        browL.setAttribute('y1', '69'); browR.setAttribute('y1', '69');
+        browL.setAttribute('y1', '69'); browL.setAttribute('y2', '77');
+        browR.setAttribute('y1', '69'); browR.setAttribute('y2', '77');
         mouth.setAttribute('d', 'M100,98 Q90,106 85,100');
         mouth2.setAttribute('d', 'M100,98 Q110,106 115,100');
         break;
@@ -602,7 +761,6 @@ NekoPunch.Render = (() => {
         eyeL.setAttribute('rx', '6'); eyeL.setAttribute('ry', '1.5');
         eyeR.setAttribute('rx', '6'); eyeR.setAttribute('ry', '1.5');
         browL.style.display = 'none'; browR.style.display = 'none';
-        // omega mouth
         mouth.setAttribute('d', 'M92,100 Q96,108 100,100');
         mouth2.setAttribute('d', 'M100,100 Q104,108 108,100');
         break;
@@ -613,7 +771,7 @@ NekoPunch.Render = (() => {
     const container = $('neko-container');
     const cls = isLeft ? 'punch-left' : 'punch-right';
     container.classList.remove('punch-left', 'punch-right');
-    void container.offsetWidth; // force reflow
+    void container.offsetWidth;
     container.classList.add(cls);
     setTimeout(() => container.classList.remove(cls), 200);
   }
@@ -648,6 +806,13 @@ NekoPunch.Render = (() => {
     const dist = 40 + Math.random() * 80;
     el.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
     el.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    $('punch-area').appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function spawnCriticalFlash() {
+    const el = document.createElement('div');
+    el.className = 'critical-flash';
     $('punch-area').appendChild(el);
     el.addEventListener('animationend', () => el.remove());
   }
@@ -703,19 +868,44 @@ NekoPunch.Render = (() => {
     setFace('angry');
   }
 
-  return { setFace, triggerPunch, spawnPopText, spawnHeart, spawnParticle, setComboEffects, startPurring, stopPurring };
+  return { setFace, triggerPunch, spawnPopText, spawnHeart, spawnParticle, spawnCriticalFlash, setComboEffects, startPurring, stopPurring };
 })();
 
 /* ─── Game Module ─── */
 NekoPunch.Game = (() => {
   let combo = 0;
   let score = 0;
-  let comboTimer = null;
   let isLeft = true;
   let punchTimes = [];
   let isPurring = false;
+  let lastFaceCombo = 0;
+  let lastPunchTime = 0; // for combo break detection
+  const COMBO_BREAK_MS = 1000; // 1 second
+
+  // Timer mode
+  const TIME_LIMIT = 10; // seconds
+  let gameState = 'idle'; // 'idle' | 'playing' | 'ended'
+  let timerInterval = null;
+  let timeRemaining = TIME_LIMIT;
 
   const POP_TEXTS = ['バシッ!', 'ドカッ!', 'ガッ!', 'ニャッ!', 'パシッ!', 'ボカッ!'];
+  const CRITICAL_TEXTS = ['会心の一撃!!', 'クリティカル!!', '超猫パンチ!!', 'にゃんと!!'];
+
+  // Face changes at specific combo milestones
+  const FACE_MILESTONES = [
+    { combo: 1,  face: 'punch' },
+    { combo: 5,  face: 'smirk' },
+    { combo: 10, face: 'surprised' },
+    { combo: 15, face: 'combo' },
+    { combo: 20, face: 'fury' },
+    { combo: 30, face: 'wink' },
+    { combo: 50, face: 'dizzy' },
+  ];
+
+  // All faces available for random selection at high combos
+  const RANDOM_FACES = ['punch', 'smirk', 'surprised', 'combo', 'fury', 'wink', 'dizzy'];
+  const RANDOM_FACE_INTERVAL = 10; // change every N combos after max milestone
+  const MAX_MILESTONE_COMBO = 50;
 
   const COMBO_TIERS = [
     { min: 0,  label: '' },
@@ -727,15 +917,15 @@ NekoPunch.Game = (() => {
   ];
 
   const TITLES = [
-    { punches: 0,     title: '猫パンチ見習い' },
-    { punches: 50,    title: '猫パンチ入門者' },
-    { punches: 100,   title: '猫パンチ修行僧' },
-    { punches: 300,   title: '猫パンチ師範代' },
-    { punches: 500,   title: '猫パンチマスター' },
-    { punches: 1000,  title: '猫パンチ仙人' },
-    { punches: 2000,  title: '猫パンチ神' },
-    { punches: 5000,  title: '猫パンチを超えし者' },
-    { punches: 10000, title: '猫そのもの' },
+    { score: 0,      title: '猫パンチ見習い' },
+    { score: 500,    title: '猫パンチ入門者' },
+    { score: 1000,   title: '猫パンチ修行僧' },
+    { score: 3000,   title: '猫パンチ師範代' },
+    { score: 5000,   title: '猫パンチマスター' },
+    { score: 10000,  title: '猫パンチ仙人' },
+    { score: 20000,  title: '猫パンチ神' },
+    { score: 50000,  title: '猫パンチを超えし者' },
+    { score: 100000, title: '猫そのもの' },
   ];
 
   const ACHIEVEMENTS = [
@@ -751,10 +941,10 @@ NekoPunch.Game = (() => {
     { id: 'speed_demon',   name: '秒速10パンチ',         icon: '⚡', cond: s => s.maxPPS >= 10 },
   ];
 
-  function getTitle(punches) {
+  function getTitle(score) {
     let t = TITLES[0].title;
     for (const tier of TITLES) {
-      if (punches >= tier.punches) t = tier.title;
+      if (score >= tier.score) t = tier.title;
     }
     return t;
   }
@@ -767,83 +957,67 @@ NekoPunch.Game = (() => {
     return tier;
   }
 
-  function punch(x, y) {
-    if (isPurring) return;
-
-    NekoPunch.Sound.init();
-    combo++;
-    const addScore = 10 + combo * 5;
-    score += addScore;
-
-    const state = NekoPunch.Storage.get();
-    state.totalPunches++;
-    if (score > state.highScore) state.highScore = score;
-    if (combo > state.maxCombo) state.maxCombo = combo;
-
-    // PPS tracking
-    const now = Date.now();
-    punchTimes.push(now);
-    punchTimes = punchTimes.filter(t => now - t < 1000);
-    if (punchTimes.length > state.maxPPS) state.maxPPS = punchTimes.length;
-
-    // Late night check
-    const hour = new Date().getHours();
-    if (hour >= 0 && hour < 5) state.lateNightPlay = true;
-
-    // Vibration
-    if (state.settings.vibrationEnabled && navigator.vibrate) {
-      navigator.vibrate(combo >= 10 ? 30 : 15);
-    }
-
-    // Visual
-    NekoPunch.Render.triggerPunch(isLeft);
-    isLeft = !isLeft;
-    NekoPunch.Render.spawnPopText(x, y, POP_TEXTS[Math.random() * POP_TEXTS.length | 0]);
-
-    if (combo >= 10) {
-      NekoPunch.Render.setFace('combo');
-      for (let i = 0; i < Math.min(combo / 10, 5); i++) {
-        NekoPunch.Render.spawnParticle(x + (Math.random() - 0.5) * 40, y + (Math.random() - 0.5) * 40);
+  // Get the face for current combo based on milestones
+  // After max milestone, change randomly every RANDOM_FACE_INTERVAL combos
+  function getFaceForCombo(c) {
+    if (c >= MAX_MILESTONE_COMBO) {
+      // At exactly the max milestone or every RANDOM_FACE_INTERVAL after it
+      if (c === MAX_MILESTONE_COMBO || c % RANDOM_FACE_INTERVAL === 0) {
+        return { combo: c, face: RANDOM_FACES[Math.random() * RANDOM_FACES.length | 0] };
       }
-    } else {
-      NekoPunch.Render.setFace('punch');
+      return null; // no change
     }
-    NekoPunch.Render.setComboEffects(combo);
-
-    // Sound
-    const intensity = 1 + Math.min(combo, 30) / 15;
-    NekoPunch.Sound.playPunch(intensity);
-    NekoPunch.Sound.playComboTick(combo);
-
-    // Quote
-    if (combo >= 5) {
-      NekoPunch.UI.showQuote('combo');
+    // Below max milestone, use fixed milestones
+    let milestone = null;
+    for (const m of FACE_MILESTONES) {
+      if (c === m.combo) milestone = m;
     }
-
-    // UI updates
-    const tier = getComboTier(combo);
-    NekoPunch.UI.updateCombo(combo, tier);
-    NekoPunch.UI.updateScore(score);
-    NekoPunch.UI.updateTitle(getTitle(state.totalPunches));
-    NekoPunch.UI.updateFooter(state.totalPunches, state.maxCombo);
-
-    // Check achievements
-    checkAchievements(state);
-
-    NekoPunch.Storage.save();
-
-    // Reset combo timer
-    clearTimeout(comboTimer);
-    comboTimer = setTimeout(() => endCombo(state), 1500);
+    return milestone;
   }
 
-  function endCombo(state) {
-    const endedCombo = combo;
+  function startGame() {
+    if (gameState === 'playing') return;
+    gameState = 'playing';
     combo = 0;
     score = 0;
+    lastFaceCombo = 0;
+    lastPunchTime = 0;
+    timeRemaining = TIME_LIMIT;
+
+    // Hide start overlay
+    document.getElementById('start-overlay').classList.add('hidden');
+
+    // Show timer
+    NekoPunch.UI.updateTimer(timeRemaining);
+
+    // Start countdown
+    const startTime = Date.now();
+    timerInterval = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      timeRemaining = Math.max(0, TIME_LIMIT - elapsed);
+      NekoPunch.UI.updateTimer(timeRemaining);
+
+      if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        endGame();
+      }
+    }, 50);
+  }
+
+  function endGame() {
+    gameState = 'ended';
+    const state = NekoPunch.Storage.get();
+
+    const endedCombo = combo;
+    const endedScore = score;
+    combo = 0;
+    score = 0;
+    lastFaceCombo = 0;
+
     NekoPunch.Render.setComboEffects(0);
     NekoPunch.UI.updateCombo(0, COMBO_TIERS[0]);
-    NekoPunch.UI.updateScore(0);
+    NekoPunch.UI.updateTimer(-1); // hide timer
 
     if (endedCombo >= 10) {
       // Purring!
@@ -859,12 +1033,118 @@ NekoPunch.Game = (() => {
       setTimeout(() => {
         NekoPunch.Render.stopPurring();
         isPurring = false;
-        NekoPunch.UI.showQuote('normal');
+        NekoPunch.UI.showResult(endedCombo, endedScore, state);
       }, 3000);
     } else {
       NekoPunch.Render.setFace('angry');
-      NekoPunch.UI.showQuote('normal');
+      NekoPunch.UI.showResult(endedCombo, endedScore, state);
     }
+  }
+
+  function resetToIdle() {
+    gameState = 'idle';
+    isPurring = false;
+    NekoPunch.Render.setFace('angry');
+    NekoPunch.UI.showQuote('normal');
+    document.getElementById('start-overlay').classList.remove('hidden');
+  }
+
+  function punch(x, y) {
+    if (isPurring) return;
+    if (document.getElementById('result-overlay').classList.contains('active')) return;
+
+    NekoPunch.Sound.init();
+
+    // First punch starts the game
+    if (gameState === 'idle') {
+      startGame();
+    }
+
+    if (gameState !== 'playing') return;
+
+    // Combo break: reset combo if more than 1 second since last punch
+    const now = Date.now();
+    if (combo > 0 && lastPunchTime > 0 && (now - lastPunchTime) >= COMBO_BREAK_MS) {
+      combo = 0;
+      lastFaceCombo = 0;
+      NekoPunch.Render.setComboEffects(0);
+      NekoPunch.Render.setFace('angry', true);
+    }
+    lastPunchTime = now;
+
+    combo++;
+    const addScore = 10 + combo * 5;
+    score += addScore;
+
+    const state = NekoPunch.Storage.get();
+    state.totalPunches++;
+    if (score > state.highScore) state.highScore = score;
+    if (combo > state.maxCombo) state.maxCombo = combo;
+
+    // PPS tracking
+    punchTimes.push(now);
+    punchTimes = punchTimes.filter(t => now - t < 1000);
+    if (punchTimes.length > state.maxPPS) state.maxPPS = punchTimes.length;
+
+    // Late night check
+    const hour = new Date().getHours();
+    if (hour >= 0 && hour < 5) state.lateNightPlay = true;
+
+    // Vibration
+    if (state.settings.vibrationEnabled && navigator.vibrate) {
+      navigator.vibrate(combo >= 10 ? 30 : 15);
+    }
+
+    // Critical hit (10% chance, more likely at high combo)
+    const critChance = 0.1 + Math.min(combo, 50) * 0.004;
+    const isCritical = Math.random() < critChance;
+    if (isCritical) {
+      score += addScore;
+    }
+
+    // Visual
+    NekoPunch.Render.triggerPunch(isLeft);
+    isLeft = !isLeft;
+
+    if (isCritical) {
+      NekoPunch.Render.spawnPopText(x, y - 30, CRITICAL_TEXTS[Math.random() * CRITICAL_TEXTS.length | 0]);
+      NekoPunch.Render.spawnCriticalFlash();
+      for (let i = 0; i < 6; i++) {
+        NekoPunch.Render.spawnParticle(x + (Math.random() - 0.5) * 60, y + (Math.random() - 0.5) * 60);
+      }
+    } else {
+      NekoPunch.Render.spawnPopText(x, y, POP_TEXTS[Math.random() * POP_TEXTS.length | 0]);
+    }
+
+    // Face changes at combo milestones, with random rotation at high combos
+    const faceChange = getFaceForCombo(combo);
+    if (faceChange && faceChange.combo !== lastFaceCombo) {
+      lastFaceCombo = faceChange.combo;
+      NekoPunch.Render.setFace(faceChange.face, true);
+      NekoPunch.UI.showQuote('combo');
+    }
+
+    // Particles at high combos
+    if (combo >= 10) {
+      for (let i = 0; i < Math.min(combo / 10, 5); i++) {
+        NekoPunch.Render.spawnParticle(x + (Math.random() - 0.5) * 40, y + (Math.random() - 0.5) * 40);
+      }
+    }
+    NekoPunch.Render.setComboEffects(combo);
+
+    // Sound
+    const intensity = 1 + Math.min(combo, 30) / 15;
+    NekoPunch.Sound.playPunch(isCritical ? intensity * 2 : intensity);
+    NekoPunch.Sound.playComboTick(combo);
+
+    // UI updates
+    const tier = getComboTier(combo);
+    NekoPunch.UI.updateCombo(combo, tier);
+
+    // Check achievements
+    checkAchievements(state);
+
+    NekoPunch.Storage.save();
   }
 
   function checkAchievements(state) {
@@ -879,49 +1159,53 @@ NekoPunch.Game = (() => {
   }
 
   function getAchievements() { return ACHIEVEMENTS; }
+  function getGameState() { return gameState; }
 
-  return { punch, getTitle, getAchievements };
+  return { punch, getTitle, getAchievements, resetToIdle, getGameState };
 })();
 
 /* ─── Quotes Data ─── */
 NekoPunch.Quotes = (() => {
   const normal = [
-    "おまえ、今日も生きてるだけで偉いぞ。…まあ当然だけどな",
-    "ストレス? そんなもん全部ここに置いてけ。…掃除はしないけど",
-    "落ち込んでるの? ふーん。…じゃあ、もっと強く叩け",
-    "にゃんも疲れたけど、おまえよりはマシだな。…たぶん",
-    "泣いていいぞ。…ただし猫の前では泣くな。毛が濡れる",
-    "おまえの悩み、猫に分かると思うか? …分からんけど聞いてやる",
-    "明日? 知らん。今日を生き延びろ。…ごはんはちゃんと食え",
-    "人間って大変だな。猫に生まれてよかった。…おまえも猫になれ",
-    "その顔、3日ぶりに見たけど…まあ、悪くないぞ",
-    "強く叩けば叩くほどいい? …いや画面は壊すなよ",
-    "おまえが来ると暇つぶしになる。…感謝しろ",
-    "サボってんじゃねーぞ。…ただし休むのは許可する",
-    "腹減った? 先に猫のごはんだろ。…まあおまえも食え",
-    "嫌なヤツのことは忘れろ。猫の方がかわいいだろ?",
-    "弱音を吐くのは構わん。…ここでだけな",
-    "100回叩いたら褒めてやる。…99回じゃダメだ",
-    "今日の仕事? 知らんけど、おまえならなんとかなるだろ。…たぶん",
-    "しょうがねーな…撫でさせてやるよ。…1回だけだぞ",
-    "人間はすぐ悩む。猫を見習え。寝ろ。",
-    "おまえ、猫パンチのセンスあるな。…褒めてないけど",
+    "生きてるだけで偉いぞ",
+    "ストレス? 全部ここに置いてけ",
+    "落ち込んでんの? もっと叩け",
+    "おまえよりはマシだな",
+    "泣くな。毛が濡れる",
+    "分からんけど聞いてやる",
+    "今日を生き延びろ",
+    "おまえも猫になれ",
+    "まあ、悪くないぞ",
+    "画面は壊すなよ?",
+    "暇つぶしにはなるな",
+    "サボるな。…休むのは許可する",
+    "猫の方がかわいいだろ?",
+    "弱音はここでだけな",
+    "100回叩いたら褒めてやる",
+    "おまえならなんとかなる",
+    "撫でさせてやるよ。1回だけ",
+    "猫を見習え。寝ろ。",
+    "センスあるな。…褒めてないけど",
+    "ほら、もっと来い",
   ];
   const comboQuotes = [
-    "お、やるじゃん。…まだまだだけど",
-    "いいぞ、その調子! …で、いつ止まるの?",
-    "連打するなって言ってないけど…すごいな",
-    "ちょ、速くない!? …嫌いじゃないけど",
-    "おまえ、怒ってるだろ。…全部出し切れ",
+    "やるじゃん!",
+    "その調子! もっと来い!",
+    "連打すごいな!?",
+    "速くない!? …嫌いじゃない",
+    "全部出し切れ!",
+    "止まるんじゃねぇぞ!",
+    "燃えてきたにゃ!",
+    "もっとだ! もっと!",
   ];
   const purrQuotes = [
-    "…ゴロゴロ…べ、別に甘えてないし…ゴロゴロ…",
-    "たくさん叩いたな。…疲れただろ。…ここに座れ",
-    "…おまえ、意外とがんばり屋だな。……褒めてないけど",
-    "ゴロゴロ…これは生理現象であって…ゴロゴロ…",
-    "ちょっとだけ…ほんのちょっとだけ…好きかも。…聞こえた? 気のせいだ",
-    "おまえが来ないと…いや、別に寂しくないけど…明日も来い",
-    "よしよし…って猫がおまえを慰めてどうする…ゴロゴロ…",
+    "…ゴロゴロ…甘えてないし…",
+    "疲れただろ。…ここに座れ",
+    "がんばり屋だな、おまえ",
+    "ゴロゴロ…生理現象だし…",
+    "ちょっとだけ…好きかも",
+    "明日も来いよ",
+    "よしよし…ゴロゴロ…",
   ];
 
   function getRandom(type) {
@@ -937,7 +1221,6 @@ NekoPunch.Quotes = (() => {
 /* ─── UI Module ─── */
 NekoPunch.UI = (() => {
   const $ = id => document.getElementById(id);
-  let currentQuoteIndex = -1;
   let notifyTimer = null;
 
   function init() {
@@ -947,6 +1230,20 @@ NekoPunch.UI = (() => {
     $('punch-area').addEventListener('pointerdown', e => {
       e.preventDefault();
       NekoPunch.Game.punch(e.clientX, e.clientY);
+    });
+
+    // Start overlay - also triggers punch on tap
+    $('start-overlay').addEventListener('pointerdown', e => {
+      e.preventDefault();
+      // Get position relative to punch area for visual effect
+      NekoPunch.Game.punch(e.clientX, e.clientY);
+    });
+
+    // Result overlay - tap to close and reset to idle
+    $('result-overlay').addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      $('result-overlay').classList.remove('active');
+      NekoPunch.Game.resetToIdle();
     });
 
     // Buttons
@@ -960,11 +1257,6 @@ NekoPunch.UI = (() => {
       overlay.addEventListener('pointerdown', e => {
         if (e.target === overlay) overlay.classList.remove('active');
       });
-    });
-
-    $('fav-btn').addEventListener('pointerdown', e => {
-      e.stopPropagation();
-      toggleFavorite();
     });
 
     // Settings toggles
@@ -1003,7 +1295,6 @@ NekoPunch.UI = (() => {
     }
 
     // Initial display
-    updateTitle(NekoPunch.Game.getTitle(state.totalPunches));
     updateFooter(state.totalPunches, state.maxCombo);
     showQuote('normal');
   }
@@ -1022,14 +1313,6 @@ NekoPunch.UI = (() => {
     el.style.fontSize = size + 'rem';
   }
 
-  function updateScore(s) {
-    $('score-display').textContent = 'SCORE: ' + s.toLocaleString();
-  }
-
-  function updateTitle(title) {
-    $('title-display').textContent = title;
-  }
-
   function updateFooter(total, bestCombo) {
     $('total-display').textContent = '累計: ' + total.toLocaleString() + 'パンチ';
     $('best-combo-display').textContent = 'BEST: ' + bestCombo + 'コンボ';
@@ -1038,29 +1321,16 @@ NekoPunch.UI = (() => {
   function showQuote(type) {
     const q = NekoPunch.Quotes.getRandom(type);
     $('quote-bubble').textContent = '「' + q.text + '」';
-    currentQuoteIndex = NekoPunch.Quotes.getAll().indexOf(q.text);
-    updateFavBtn();
   }
 
-  function toggleFavorite() {
-    if (currentQuoteIndex < 0) return;
-    const state = NekoPunch.Storage.get();
-    const idx = state.favoriteQuotes.indexOf(currentQuoteIndex);
-    if (idx >= 0) {
-      state.favoriteQuotes.splice(idx, 1);
-    } else {
-      state.favoriteQuotes.push(currentQuoteIndex);
-    }
-    NekoPunch.Storage.save();
-    updateFavBtn();
-  }
-
-  function updateFavBtn() {
-    const state = NekoPunch.Storage.get();
-    const isFav = currentQuoteIndex >= 0 && state.favoriteQuotes.includes(currentQuoteIndex);
-    const btn = $('fav-btn');
-    btn.innerHTML = isFav ? '&#9829;' : '&#9825;';
-    btn.classList.toggle('active', isFav);
+  function showResult(combo, score, state) {
+    $('result-combo').textContent = combo + ' コンボ';
+    $('result-score').textContent = score.toLocaleString() + ' 点';
+    $('result-best').textContent = state.maxCombo + ' コンボ';
+    $('result-title').textContent = NekoPunch.Game.getTitle(score);
+    $('result-overlay').classList.add('active');
+    updateFooter(state.totalPunches, state.maxCombo);
+    NekoPunch.Sound.playResult();
   }
 
   function showAchievements() {
@@ -1081,6 +1351,22 @@ NekoPunch.UI = (() => {
     $('modal-settings').classList.add('active');
   }
 
+  function updateTimer(seconds) {
+    const el = $('timer-display');
+    if (seconds < 0) {
+      el.textContent = '';
+      el.classList.remove('urgent');
+      return;
+    }
+    const display = Math.ceil(seconds);
+    el.textContent = display + '秒';
+    if (seconds <= 3) {
+      el.classList.add('urgent');
+    } else {
+      el.classList.remove('urgent');
+    }
+  }
+
   function notify(text) {
     const el = $('notification');
     el.textContent = text;
@@ -1089,7 +1375,7 @@ NekoPunch.UI = (() => {
     notifyTimer = setTimeout(() => el.classList.remove('show'), 2500);
   }
 
-  return { init, updateCombo, updateScore, updateTitle, updateFooter, showQuote, notify };
+  return { init, updateCombo, updateFooter, showQuote, showResult, updateTimer, notify };
 })();
 
 /* ─── Init ─── */
