@@ -1307,10 +1307,9 @@ NekoPunch.UI = (() => {
       el.style.fontSize = '';
       return;
     }
-    el.textContent = combo + ' COMBO';
+    el.textContent = combo + 'コンボ!!';
     el.style.color = tier.color || '#fff';
-    const size = 1.5 + Math.min(combo, 50) * 0.04;
-    el.style.fontSize = size + 'rem';
+    el.style.fontSize = '1.8rem';
   }
 
   function updateFooter(total, bestCombo) {
