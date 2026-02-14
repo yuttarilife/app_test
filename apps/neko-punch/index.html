@@ -1135,10 +1135,7 @@ NekoPunch.Game = (() => {
     }
     NekoPunch.Render.setComboEffects(combo);
 
-    // Sound
-    const intensity = 1 + Math.min(combo, 30) / 15;
-    NekoPunch.Sound.playPunch(isCritical ? intensity * 2 : intensity);
-    NekoPunch.Sound.playComboTick(combo);
+    // Sound (punch sounds disabled)
 
     // UI updates
     const tier = getComboTier(combo);
@@ -1310,7 +1307,7 @@ NekoPunch.UI = (() => {
       el.style.fontSize = '';
       return;
     }
-    el.textContent = (tier.label ? tier.label + ' ' : '') + combo + ' COMBO';
+    el.textContent = combo + ' COMBO';
     el.style.color = tier.color || '#fff';
     const size = 1.5 + Math.min(combo, 50) * 0.04;
     el.style.fontSize = size + 'rem';
