@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Spirit Ascend — 精霊の試練</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation}
+html,body{height:100%;overflow:hidden}
+body{
+  min-height:100dvh;display:flex;flex-direction:column;
+  background:linear-gradient(160deg,#0d0d2b 0%,#1a0a3a 50%,#0a1a3a 100%);
+  color:#eef;
+  font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif;
+  user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;
+  -webkit-text-size-adjust:100%;
+}
+
+/* === CSS Variables (gender colors) === */
+body{--spirit-main:#a78bfa;--spirit-sub:#7c3aed;--spirit-glow:#f5f3ff}
+body.gender-girl{--spirit-main:#f472b6;--spirit-sub:#e879f9;--spirit-glow:#fce7f3}
+body.gender-boy{--spirit-main:#60a5fa;--spirit-sub:#3b82f6;--spirit-glow:#eff6ff}
+body.gender-neutral{--spirit-main:#a78bfa;--spirit-sub:#7c3aed;--spirit-glow:#f5f3ff}
+
+/* === Screens === */
+.screen{
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  position:fixed;inset:0;z-index:10;
+  background:linear-gradient(160deg,#0d0d2b 0%,#1a0a3a 50%,#0a1a3a 100%);
+  padding:24px;text-align:center;
+  overflow-y:auto;
+}
+.screen.active{display:flex}
+
+/* === Title Screen === */
+#screen-title h1{
+  font-size:2rem;font-weight:900;
+  color:var(--spirit-main);
+  text-shadow:0 0 20px var(--spirit-main);
+  margin-bottom:8px;letter-spacing:0.05em;
+}
+#screen-title .sub{font-size:1rem;opacity:0.7;margin-bottom:40px}
+.btn{
+  display:block;width:200px;margin:8px auto;
+  padding:14px 0;border-radius:14px;border:2px solid var(--spirit-main);
+  background:rgba(167,139,250,0.15);color:#eef;
+  font-size:1rem;font-weight:700;cursor:pointer;
+  transition:background 0.2s,transform 0.1s;
+}
+.btn:active{transform:scale(0.96)}
+.btn:hover{background:rgba(167,139,250,0.3)}
+.btn.primary{background:var(--spirit-main);color:#0d0d2b;border-color:var(--spirit-main)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.danger{border-color:#f87171;color:#f87171;background:rgba(248,113,113,0.1)}
+
+/* === Gender Screen === */
+#screen-gender h2{font-size:1.4rem;margin-bottom:8px;color:var(--spirit-main)}
+#screen-gender .desc{font-size:0.85rem;opacity:0.6;margin-bottom:28px}
+.gender-choices{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.gender-card{
+  width:90px;padding:16px 8px;border-radius:16px;
+  border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);
+  cursor:pointer;transition:border-color 0.2s,background 0.2s;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.gender-card:hover,.gender-card.selected{border-color:var(--spirit-main);background:rgba(167,139,250,0.2)}
+.gender-card svg{width:50px;height:60px}
+.gender-card .label{font-size:0.8rem;font-weight:700}
+.skip-note{font-size:0.75rem;opacity:0.5;margin-top:8px}
+
+/* === Stage Select === */
+#screen-stage-select h2{font-size:1.3rem;color:var(--spirit-main);margin-bottom:20px}
+.stage-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+  max-width:320px;width:100%;
+}
+.stage-btn{
+  aspect-ratio:1;border-radius:12px;border:2px solid rgba(167,139,250,0.4);
+  background:rgba(167,139,250,0.1);color:#eef;
+  font-size:1rem;font-weight:700;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:background 0.2s,border-color 0.2s,transform 0.1s;
+}
+.stage-btn:active{transform:scale(0.93)}
+.stage-btn.cleared{border-color:#fbbf24;background:rgba(251,191,36,0.15);color:#fbbf24}
+.stage-btn.locked{opacity:0.35;pointer-events:none}
+.stage-btn .stage-num{font-size:1.1rem}
+.stage-btn .stage-star{font-size:0.7rem;opacity:0.7}
+.stage-actions{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+/* === Countdown Screen === */
+#screen-countdown{background:rgba(13,13,43,0.95)}
+#countdown-num{
+  font-size:6rem;font-weight:900;color:var(--spirit-main);
+  text-shadow:0 0 40px var(--spirit-main);
+  animation:countdown-pop 0.5s ease-out;
+}
+@keyframes countdown-pop{
+  0%{transform:scale(1.5);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+#countdown-stage-label{font-size:1rem;opacity:0.7;margin-bottom:20px}
+
+/* === Game Screen === */
+#screen-game{
+  flex-direction:column;
+  align-items:stretch;
+  position:fixed;inset:0;z-index:10;
+  background:transparent;padding:0;
+  overflow:hidden;
+}
+#game-hud{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;background:rgba(0,0,0,0.4);
+  flex-shrink:0;z-index:20;
+}
+#hud-stage{font-size:0.85rem;opacity:0.8}
+#hud-score{font-size:1rem;font-weight:700;color:var(--spirit-main)}
+#hud-timer{
+  font-size:1.3rem;font-weight:900;color:#eef;
+  min-width:48px;text-align:right;
+}
+#hud-timer.urgent{color:#f87171;animation:timer-pulse 0.5s infinite}
+@keyframes timer-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@keyframes spirit-born{
+  0%  {transform:scale(0.06);opacity:0.3;filter:drop-shadow(0 0 18px var(--spirit-main));}
+  35% {transform:scale(0.13);opacity:0.9;filter:drop-shadow(0 0 28px var(--spirit-main));}
+  68% {transform:scale(1.18);opacity:1;}
+  84% {transform:scale(0.93);}
+  100%{transform:scale(1);opacity:1;filter:none;}
+}
+.spirit-born{animation:spirit-born 1.5s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+
+#game-area{
+  flex:1;position:relative;overflow:hidden;
+  cursor:none;
+}
+#spirit-el{
+  position:absolute;bottom:40px;
+  width:60px;height:80px;
+  z-index:5;
+  pointer-events:none;
+}
+#spirit-el svg{width:100%;height:100%}
+
+.obstacle{
+  position:absolute;top:-30px;left:0;
+  pointer-events:none;z-index:4;
+}
+
+/* Near-miss effect */
+.near-miss-text{
+  position:absolute;pointer-events:none;
+  font-size:0.9rem;font-weight:900;color:#fbbf24;
+  text-shadow:0 0 8px rgba(251,191,36,0.8);
+  animation:near-miss-anim 0.8s ease-out forwards;
+  z-index:30;
+}
+@keyframes near-miss-anim{
+  0%{opacity:1;transform:translate(-50%,0)}
+  100%{opacity:0;transform:translate(-50%,-50px)}
+}
+
+/* === Result Screen === */
+#screen-result h2{
+  font-size:1.5rem;font-weight:900;margin-bottom:6px;
+}
+#screen-result h2.clear{color:#fbbf24}
+#screen-result h2.gameover{color:#f87171}
+#result-spirit{width:80px;height:100px;margin:12px auto}
+#result-spirit svg{width:100%;height:100%}
+#result-msg{
+  font-size:1rem;opacity:0.9;margin:12px 0;
+  background:rgba(255,255,255,0.07);padding:10px 20px;border-radius:12px;
+}
+.result-stats{width:100%;max-width:280px;margin:12px 0}
+.result-row{
+  display:flex;justify-content:space-between;padding:6px 0;
+  border-bottom:1px solid rgba(255,255,255,0.08);font-size:0.9rem;
+}
+.result-row:last-child{border:none}
+.result-label{opacity:0.65}
+.result-val{font-weight:700;color:var(--spirit-main)}
+.result-val.gold{color:#fbbf24}
+#save-form{
+  width:100%;max-width:280px;margin:12px 0;
+  background:rgba(255,255,255,0.07);border-radius:12px;padding:14px;
+}
+#save-form p{font-size:0.85rem;margin-bottom:8px;opacity:0.8}
+#name-input{
+  width:100%;padding:8px 12px;border-radius:8px;
+  border:1px solid rgba(167,139,250,0.5);
+  background:rgba(0,0,0,0.3);color:#eef;font-size:1rem;
+  margin-bottom:8px;
+}
+.result-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+
+/* === All Clear Screen === */
+#screen-all-clear h2{
+  font-size:1.8rem;font-weight:900;color:#fbbf24;
+  text-shadow:0 0 20px #fbbf24;margin-bottom:8px;
+}
+#all-clear-spirit{width:100px;height:120px;margin:16px auto}
+#all-clear-spirit svg{width:100%;height:100%}
+.sparkle{
+  position:absolute;font-size:1.5rem;
+  animation:sparkle-anim 2s ease-in-out infinite;
+}
+@keyframes sparkle-anim{
+  0%,100%{opacity:0;transform:scale(0.5)}
+  50%{opacity:1;transform:scale(1.2)}
+}
+
+/* === Modals === */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  z-index:100;align-items:center;justify-content:center;
+}
+.modal-overlay.active{display:flex}
+.modal{
+  background:linear-gradient(135deg,#16213e,#1a0a3a);
+  border:1px solid rgba(167,139,250,0.4);
+  border-radius:18px;padding:24px;
+  max-width:360px;width:90%;max-height:80vh;overflow-y:auto;
+}
+.modal h2{font-size:1.1rem;margin-bottom:14px;color:var(--spirit-main)}
+.toggle-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;font-size:0.9rem;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.toggle-row:last-of-type{border:none}
+.toggle-switch{
+  width:44px;height:24px;background:#333;border-radius:12px;
+  position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;
+}
+.toggle-switch.on{background:var(--spirit-main)}
+.toggle-switch::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:20px;height:20px;background:#fff;border-radius:50%;
+  transition:transform 0.2s;
+}
+.toggle-switch.on::after{transform:translateX(20px)}
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:0.9rem;
+}
+#setting-name-input{
+  width:130px;padding:6px 10px;border-radius:8px;
+  border:1px solid rgba(167,139,250,0.4);
+  background:rgba(0,0,0,0.3);color:#eef;font-size:0.9rem;
+}
+.modal-close{
+  display:inline-block;margin-top:14px;padding:8px 20px;
+  border-radius:10px;border:1px solid rgba(255,255,255,0.2);
+  background:none;color:#eef;font-size:0.85rem;cursor:pointer;
+}
+.modal-close:hover{background:rgba(255,255,255,0.1)}
+
+/* Ranking */
+#ranking-list{width:100%}
+.ranking-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:0.85rem;
+}
+.ranking-item:last-child{border:none}
+.rank-num{width:24px;font-weight:900;color:var(--spirit-main);flex-shrink:0}
+.rank-num.gold{color:#fbbf24}
+.rank-num.silver{color:#c0c0c0}
+.rank-num.bronze{color:#cd7f32}
+.rank-name{flex:1;font-weight:600}
+.rank-score{font-weight:700;color:#fbbf24}
+.rank-stage{font-size:0.75rem;opacity:0.6;margin-left:4px}
+
+/* === Notification === */
+#notification{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  background:var(--spirit-main);color:#0d0d2b;padding:8px 20px;border-radius:12px;
+  font-size:0.85rem;font-weight:700;z-index:200;
+  opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;
+}
+#notification.show{opacity:1}
+
+/* Share canvas (hidden) */
+#share-canvas{display:none}
+
+/* Evolve overlay */
+#evolve-overlay{
+  display:none;position:fixed;inset:0;z-index:50;
+  align-items:center;justify-content:center;flex-direction:column;
+  background:rgba(0,0,0,0.7);
+}
+#evolve-overlay.active{display:flex}
+#evolve-label{
+  font-size:1.5rem;font-weight:900;color:var(--spirit-main);
+  text-shadow:0 0 20px var(--spirit-main);margin-top:16px;
+}
+#evolve-spirit{width:120px;height:150px}
+#evolve-spirit svg{width:100%;height:100%}
+@keyframes evolve-glow{
+  0%,100%{filter:drop-shadow(0 0 8px var(--spirit-main))}
+  50%{filter:drop-shadow(0 0 30px var(--spirit-main))}
+}
+#evolve-spirit.animating{animation:evolve-glow 0.8s ease-in-out 2}
+
+/* Spirit form animations */
+@keyframes pulse-spirit{
+  0%,100%{transform:scale(1);opacity:0.9}
+  50%{transform:scale(1.1);opacity:1}
+}
+@keyframes hover-spirit{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-5px)}
+}
+@keyframes glow-wand{
+  0%,100%{filter:drop-shadow(0 0 4px #fbbf24)}
+  50%{filter:drop-shadow(0 0 12px #fbbf24)}
+}
+
+/* Responsive */
+@media(min-width:768px){
+  body{max-width:480px;margin:0 auto}
+  .screen{max-width:480px;margin:0 auto}
+}
+@media(min-width:1024px){
+  body{border-radius:16px;box-shadow:0 0 60px rgba(0,0,0,0.6);
+    min-height:90dvh;margin-top:5dvh}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none !important;transition-duration:0.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- Title Screen -->
+<div class="screen" id="screen-title">
+  <div id="title-spirit" style="width:80px;height:100px;margin-bottom:16px"></div>
+  <h1>Spirit Ascend</h1>
+  <p class="sub">〜精霊の試練〜</p>
+  <button class="btn primary" id="btn-start">はじめる</button>
+  <button class="btn" id="btn-ranking">記録を見る</button>
+  <button class="btn" id="btn-settings-title">設定</button>
+</div>
+
+<!-- Gender Select Screen -->
+<div class="screen" id="screen-gender">
+  <h2>精霊の見た目を選ぼう</h2>
+  <p class="desc">設定画面からいつでも変更できます</p>
+  <div class="gender-choices">
+    <div class="gender-card" data-gender="girl">
+      <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="22" r="14" fill="#f472b6" opacity="0.9"/>
+        <ellipse cx="25" cy="44" rx="10" ry="8" fill="#f472b6"/>
+        <polygon points="25,36 17,52 33,52" fill="#e879f9" opacity="0.8"/>
+        <circle cx="21" cy="20" r="2" fill="#0d0d2b"/>
+        <circle cx="29" cy="20" r="2" fill="#0d0d2b"/>
+        <ellipse cx="25" cy="24" rx="2" ry="1.5" fill="#fb7185"/>
+      </svg>
+      <span class="label">女の子</span>
+    </div>
+    <div class="gender-card" data-gender="boy">
+      <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="22" r="14" fill="#60a5fa" opacity="0.9"/>
+        <ellipse cx="25" cy="44" rx="10" ry="8" fill="#60a5fa"/>
+        <rect x="18" y="36" width="14" height="14" rx="3" fill="#3b82f6" opacity="0.8"/>
+        <circle cx="21" cy="20" r="2" fill="#0d0d2b"/>
+        <circle cx="29" cy="20" r="2" fill="#0d0d2b"/>
+        <ellipse cx="25" cy="24" rx="2" ry="1.5" fill="#93c5fd"/>
+      </svg>
+      <span class="label">男の子</span>
+    </div>
+    <div class="gender-card" data-gender="neutral">
+      <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="22" r="14" fill="#a78bfa" opacity="0.9"/>
+        <ellipse cx="25" cy="44" rx="10" ry="8" fill="#a78bfa"/>
+        <polygon points="25,36 16,52 34,52" fill="#7c3aed" opacity="0.8"/>
+        <circle cx="21" cy="20" r="2" fill="#0d0d2b"/>
+        <circle cx="29" cy="20" r="2" fill="#0d0d2b"/>
+        <ellipse cx="25" cy="24" rx="2" ry="1.5" fill="#c4b5fd"/>
+      </svg>
+      <span class="label">どちらでも</span>
+    </div>
+  </div>
+  <button class="btn primary" id="btn-gender-ok">決定</button>
+  <button class="btn" id="btn-gender-skip">スキップ</button>
+  <p class="skip-note">スキップすると「どちらでも（紫）」が適用されます</p>
+</div>
+
+<!-- Stage Select Screen -->
+<div class="screen" id="screen-stage-select">
+  <h2>ステージを選ぼう</h2>
+  <div class="stage-grid" id="stage-grid"></div>
+  <div class="stage-actions">
+    <button class="btn" id="btn-to-title" style="width:140px">タイトルへ</button>
+    <button class="btn" id="btn-settings-stage" style="width:140px">設定</button>
+  </div>
+</div>
+
+<!-- Countdown Screen -->
+<div class="screen" id="screen-countdown">
+  <div id="countdown-stage-label"></div>
+  <div id="countdown-num">3</div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="screen-game">
+  <div id="game-hud">
+    <span id="hud-stage">Stage 1</span>
+    <span id="hud-score">0点</span>
+    <span id="hud-timer">20</span>
+  </div>
+  <div id="game-area">
+    <div id="spirit-el"></div>
+  </div>
+</div>
+
+<!-- Result Screen -->
+<div class="screen" id="screen-result">
+  <h2 id="result-title"></h2>
+  <div id="result-spirit"></div>
+  <div id="result-msg"></div>
+  <div class="result-stats" id="result-stats"></div>
+  <div id="save-form" style="display:none">
+    <p>記録を保存しますか？</p>
+    <div class="result-buttons" id="save-choice-buttons">
+      <button class="btn primary" id="btn-save-yes" style="width:120px;margin:0">保存する</button>
+      <button class="btn" id="btn-save-no" style="width:120px;margin:0">保存しない</button>
+    </div>
+    <div id="save-name-form" style="display:none;margin-top:10px">
+      <input type="text" id="name-input" placeholder="冒険者の名前（最大8文字）" maxlength="8">
+      <div class="result-buttons" style="margin-top:8px">
+        <button class="btn primary" id="btn-save-confirm" style="width:120px;margin:0">決定</button>
+      </div>
+    </div>
+  </div>
+  <div class="result-buttons" id="result-action-buttons"></div>
+</div>
+
+<!-- All Clear Screen -->
+<div class="screen" id="screen-all-clear">
+  <h2>ALL CLEAR!</h2>
+  <p style="color:#fbbf24;margin-bottom:8px">全ステージ制覇！</p>
+  <div id="all-clear-spirit"></div>
+  <div id="all-clear-stats" class="result-stats"></div>
+  <div id="allclear-save-form" style="display:none;width:100%;max-width:280px;margin:12px 0;background:rgba(255,255,255,0.07);border-radius:12px;padding:14px">
+    <p style="font-size:0.85rem;margin-bottom:8px;opacity:0.8">記録を保存しますか？</p>
+    <input type="text" id="allclear-name-input" placeholder="冒険者の名前（最大8文字）" maxlength="8" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid rgba(167,139,250,0.5);background:rgba(0,0,0,0.3);color:#eef;font-size:1rem;margin-bottom:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <button class="btn primary" id="btn-allclear-save-yes" style="width:120px;margin:0">保存する</button>
+      <button class="btn" id="btn-allclear-save-no" style="width:120px;margin:0">保存しない</button>
+    </div>
+  </div>
+  <div class="result-buttons">
+    <button class="btn primary" id="btn-share" style="width:160px">シェアカードを保存</button>
+    <button class="btn" id="btn-allclear-menu" style="width:160px">タイトルへ</button>
+  </div>
+  <canvas id="share-canvas" width="400" height="300"></canvas>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal">
+    <h2>⚙ 設定</h2>
+    <div class="setting-row">
+      <span>冒険者の名前</span>
+      <input type="text" id="setting-name-input" maxlength="8" placeholder="冒険者">
+    </div>
+    <div class="setting-row" style="align-items:flex-start;flex-direction:column;gap:8px">
+      <span>精霊の見た目</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn" data-gender-set="girl" style="width:80px;padding:6px;font-size:0.8rem;margin:0">女の子</button>
+        <button class="btn" data-gender-set="boy" style="width:80px;padding:6px;font-size:0.8rem;margin:0">男の子</button>
+        <button class="btn" data-gender-set="neutral" style="width:80px;padding:6px;font-size:0.8rem;margin:0">どちらでも</button>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <span>サウンド</span>
+      <div class="toggle-switch on" id="toggle-sound"></div>
+    </div>
+    <div class="setting-row">
+      <span>音量</span>
+      <input type="range" id="setting-volume" min="0" max="100" step="5" style="width:130px;accent-color:var(--spirit-main)">
+    </div>
+    <div class="toggle-row">
+      <span>プレイ後に保存確認する</span>
+      <div class="toggle-switch on" id="toggle-save"></div>
+    </div>
+    <hr style="border-color:rgba(255,255,255,0.08);margin:10px 0">
+    <button class="btn danger" id="btn-reset-data" style="width:100%;margin:0">記録をすべて消す</button>
+    <button class="modal-close" id="close-settings">閉じる</button>
+  </div>
+</div>
+
+<!-- Ranking Modal -->
+<div class="modal-overlay" id="modal-ranking">
+  <div class="modal">
+    <h2>📜 冒険の記録</h2>
+    <div id="ranking-list"></div>
+    <button class="modal-close" id="close-ranking">閉じる</button>
+  </div>
+</div>
+
+<!-- Evolve Overlay -->
+<div id="evolve-overlay">
+  <div id="evolve-spirit"></div>
+  <div id="evolve-label">精霊が進化した！</div>
+</div>
+
+<!-- Notification -->
+<div id="notification"></div>
+
+<script>
+/* ============================================================
+   Spirit Ascend — Single-file Web App
+   ============================================================ */
+const SpiritAscend = {};
+
+/* ─── Config ─── */
+SpiritAscend.Config = (() => {
+  const STAGES = [
+    {id:1, timeLimit:20, obstacleTypes:[1],       spawnInterval:1500, baseSpeed:0.18, speedInc:0.001},
+    {id:2, timeLimit:22, obstacleTypes:[1,2],     spawnInterval:1300, baseSpeed:0.22, speedInc:0.002},
+    {id:3, timeLimit:24, obstacleTypes:[1,2],     spawnInterval:1100, baseSpeed:0.27, speedInc:0.002},
+    {id:4, timeLimit:26, obstacleTypes:[1,2,3],   spawnInterval:900,  baseSpeed:0.32, speedInc:0.003},
+    {id:5, timeLimit:28, obstacleTypes:[1,2,3],   spawnInterval:750,  baseSpeed:0.37, speedInc:0.003},
+    {id:6, timeLimit:30, obstacleTypes:[1,2,3,4], spawnInterval:620,  baseSpeed:0.43, speedInc:0.004},
+    {id:7, timeLimit:32, obstacleTypes:[1,2,3,4], spawnInterval:500,  baseSpeed:0.49, speedInc:0.004},
+    {id:8, timeLimit:35, obstacleTypes:[1,2,3,4], spawnInterval:420,  baseSpeed:0.56, speedInc:0.005},
+    {id:9, timeLimit:38, obstacleTypes:[1,2,3,4,5],spawnInterval:340, baseSpeed:0.63, speedInc:0.005},
+    {id:10,timeLimit:42, obstacleTypes:[1,2,3,4,5],spawnInterval:270, baseSpeed:0.72, speedInc:0.006},
+  ];
+  const OBSTACLES = [
+    {id:1,name:'流れ星',radius:20},
+    {id:2,name:'魔法の球',radius:22},
+    {id:3,name:'三日月',radius:20},
+    {id:4,name:'炎弾',radius:22},
+    {id:5,name:'光の渦',radius:26},
+  ];
+  const CLEAR_MESSAGES = [
+    '「次の試練に進もう！」',
+    '「やったね！この調子で行こう」',
+    '「あなたの力、まだまだ伸びるよ」',
+    '「すごい！私もどんどん強くなってる！」',
+    '「一緒に頑張れば怖くない！」',
+    '「ここまで来たんだ。もう少しだよ」',
+    '「その調子！次の試練もきっと乗り越えられる」',
+  ];
+  const SCORES = {perSecond:10,nearMiss:50,stageClear:500,perfect:1000};
+  const SPIRIT_SPEED = 0.35;
+  const SPIRIT_R = 12;
+
+  function getStage(id) { return STAGES[id-1]; }
+  function getSpiritForm(stage) {
+    if(stage<=2) return 1; if(stage<=4) return 2;
+    if(stage<=6) return 3; if(stage<=8) return 4; return 5;
+  }
+  function pickObstacleType(stage) {
+    const types = STAGES[stage-1].obstacleTypes;
+    return types[Math.random()*types.length|0];
+  }
+
+  let lastMsgIdx = -1;
+  function getClearMessage() {
+    let idx;
+    do { idx = Math.random()*CLEAR_MESSAGES.length|0; } while(idx===lastMsgIdx && CLEAR_MESSAGES.length>1);
+    lastMsgIdx = idx;
+    return CLEAR_MESSAGES[idx];
+  }
+
+  return {STAGES,OBSTACLES,SCORES,SPIRIT_SPEED,SPIRIT_R,getStage,getSpiritForm,pickObstacleType,getClearMessage};
+})();
+
+/* ─── Storage ─── */
+SpiritAscend.Storage = (() => {
+  const KEY = 'spirit-ascend-data';
+  const DEFAULTS = {
+    version:1,
+    gender:null,
+    playerName:'冒険者',
+    clearedStages:[],
+    highScore:0,
+    totalScore:0,
+    playCount:0,
+    perfectCount:0,
+    ranking:[],
+    settings:{soundEnabled:true,saveOnResult:true,volume:0.7}
+  };
+  let available = true;
+  let state = null;
+
+  function init() {
+    try {
+      localStorage.setItem('__sa_test__','1');
+      localStorage.removeItem('__sa_test__');
+    } catch {
+      available = false;
+      setTimeout(()=>SpiritAscend.UI.notify('データ保存が利用できません（このセッション中のみ記録されます）'),500);
+    }
+    state = load();
+    return state;
+  }
+
+  function load() {
+    if(!available) return structuredClone ? structuredClone(DEFAULTS) : JSON.parse(JSON.stringify(DEFAULTS));
+    try {
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return JSON.parse(JSON.stringify(DEFAULTS));
+      return validate(JSON.parse(raw));
+    } catch {
+      return JSON.parse(JSON.stringify(DEFAULTS));
+    }
+  }
+
+  function validate(d) {
+    const s = JSON.parse(JSON.stringify(DEFAULTS));
+    if(typeof d !== 'object' || d===null) return s;
+    const clamp = (v,mn,mx) => Math.max(mn,Math.min(mx,typeof v==='number'&&isFinite(v)?Math.floor(v):0));
+    s.highScore = clamp(d.highScore,0,1e10);
+    s.totalScore = clamp(d.totalScore,0,1e12);
+    s.playCount = clamp(d.playCount,0,1e6);
+    s.perfectCount = clamp(d.perfectCount,0,1e5);
+    s.gender = ['girl','boy','neutral'].includes(d.gender) ? d.gender : null;
+    s.playerName = typeof d.playerName==='string' ? d.playerName.slice(0,8)||'冒険者' : '冒険者';
+    s.clearedStages = Array.isArray(d.clearedStages) ? d.clearedStages.filter(n=>typeof n==='number'&&n>=1&&n<=10) : [];
+    s.ranking = Array.isArray(d.ranking) ? d.ranking.filter(r=>r&&typeof r==='object').slice(0,20) : [];
+    if(d.settings&&typeof d.settings==='object') {
+      s.settings.soundEnabled = d.settings.soundEnabled !== false;
+      s.settings.saveOnResult = d.settings.saveOnResult !== false;
+      s.settings.volume = (typeof d.settings.volume==='number'&&d.settings.volume>=0&&d.settings.volume<=1) ? d.settings.volume : 0.7;
+    }
+    return s;
+  }
+
+  function save() {
+    if(!available||!state) return;
+    try { localStorage.setItem(KEY,JSON.stringify(state)); } catch {}
+  }
+
+  function get() { return state; }
+
+  function saveRanking(entry) {
+    state.ranking.push(entry);
+    state.ranking.sort((a,b)=>b.score-a.score);
+    if(state.ranking.length>20) state.ranking = state.ranking.slice(0,20);
+    save();
+  }
+
+  function markCleared(stage) {
+    if(!state.clearedStages.includes(stage)) {
+      state.clearedStages.push(stage);
+      state.clearedStages.sort((a,b)=>a-b);
+      save();
+    }
+  }
+
+  function reset() {
+    state = JSON.parse(JSON.stringify(DEFAULTS));
+    save();
+  }
+
+  return {init,get,save,saveRanking,markCleared,reset};
+})();
+
+/* ─── Sound ─── */
+SpiritAscend.Sound = (() => {
+  let ctx=null, initialized=false, enabled=true;
+  let bgmGain=null, bgmOscA=null, bgmScheduler=null;
+  let masterVolume=0.7;
+
+  function init() {
+    if(initialized) return;
+    try {
+      ctx = new(window.AudioContext||window.webkitAudioContext)();
+      if(ctx.state==='suspended') ctx.resume().catch(()=>{enabled=false;});
+      initialized = true;
+    } catch { enabled=false; }
+  }
+
+  function setEnabled(v) {
+    enabled = v;
+    if(bgmGain) bgmGain.gain.linearRampToValueAtTime(v?0.07*masterVolume:0,ctx.currentTime+0.3);
+  }
+  function setVolume(v) {
+    masterVolume = Math.max(0,Math.min(1,v));
+    if(bgmGain&&enabled) bgmGain.gain.linearRampToValueAtTime(0.07*masterVolume,ctx.currentTime+0.1);
+  }
+  function getVolume() { return masterVolume; }
+  function isEnabled() { return enabled; }
+
+  function note(freq,type,vol,dur,start) {
+    if(!ctx||!enabled) return;
+    const t = start||ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type||'sine';
+    osc.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(vol*masterVolume,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t+dur+0.01);
+  }
+
+  function playNearMiss() { note(880,'sine',0.12,0.08); }
+
+  function playClear() {
+    if(!ctx||!enabled) return;
+    const now = ctx.currentTime;
+    [[523.25,'sine',0.15,0.1],[659.25,'sine',0.15,0.1],[783.99,'sine',0.15,0.1],[1046.5,'sine',0.2,0.25]].forEach(([f,t,v,d],i)=>{
+      note(f,t,v,d,now+i*0.1);
+    });
+  }
+
+  function playEvolve() {
+    if(!ctx||!enabled) return;
+    const now = ctx.currentTime;
+    [261.63,329.63,392].forEach((f,i)=>{
+      note(f,'triangle',0.12,0.5,now+i*0.05);
+    });
+    note(523.25,'sine',0.15,0.4,now+0.2);
+  }
+
+  function playGameOver() {
+    if(!ctx||!enabled) return;
+    const now = ctx.currentTime;
+    note(293.66,'sine',0.2,0.15,now);
+    note(246.94,'sine',0.2,0.15,now+0.18);
+    note(174.61,'sine',0.25,0.4,now+0.36);
+  }
+
+  function playCountdown() { note(440,'sine',0.15,0.1); }
+  function playGo() {
+    if(!ctx||!enabled) return;
+    const now = ctx.currentTime;
+    note(880,'sine',0.2,0.1,now);
+    note(1046.5,'sine',0.2,0.15,now+0.08);
+  }
+
+  function startBGM(stage) {
+    if(!ctx||!enabled||bgmGain) return;
+    bgmGain = ctx.createGain();
+    bgmGain.gain.setValueAtTime(0.07*masterVolume,ctx.currentTime);
+    bgmGain.connect(ctx.destination);
+
+    // ステージ別テーマ（2ステージごとに変化）
+    const themes = [
+      // Stage 1-2: Cメジャー 明るく楽しい
+      {melody:[523.25,659.25,783.99,1046.5,783.99,659.25,523.25,392],
+       bass:130.81, tempo:350, mtype:'triangle', btype:'sine'},
+      // Stage 3-4: Gメジャー 活発・冒険感
+      {melody:[587.33,740,880,1174.66,880,740,587.33,493.88],
+       bass:146.83, tempo:290, mtype:'triangle', btype:'sine'},
+      // Stage 5-6: Dメジャー テンション上昇
+      {melody:[659.25,830.61,987.77,1318.5,987.77,830.61,659.25,554.37],
+       bass:164.81, tempo:240, mtype:'square', btype:'triangle'},
+      // Stage 7-8: Aメジャー 緊迫・スリル
+      {melody:[880,1108.7,1318.5,1760,1318.5,1108.7,880,740],
+       bass:220, tempo:200, mtype:'square', btype:'triangle'},
+      // Stage 9-10: 最速・フィナーレ
+      {melody:[1046.5,1318.5,1568,2093,1568,1318.5,1046.5,880],
+       bass:261.63, tempo:160, mtype:'sawtooth', btype:'square'},
+    ];
+    const theme = themes[Math.min(Math.floor((stage-1)/2), themes.length-1)];
+
+    // ベース音（持続）
+    const bassOsc = ctx.createOscillator();
+    const bassGain = ctx.createGain();
+    bassOsc.type = theme.btype;
+    bassOsc.frequency.setValueAtTime(theme.bass, ctx.currentTime);
+    bassGain.gain.setValueAtTime(0.035, ctx.currentTime);
+    bassOsc.connect(bassGain).connect(bgmGain);
+    bassOsc.start();
+    bgmOscA = bassOsc;
+
+    // メロディーアルペジオ
+    let noteIdx = 0;
+    function scheduleNote() {
+      if(!bgmGain) return;
+      const freq = theme.melody[noteIdx % theme.melody.length];
+      noteIdx++;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = theme.mtype;
+      osc.frequency.setValueAtTime(freq, now);
+      g.gain.setValueAtTime(0.032, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + theme.tempo/1600);
+      osc.connect(g).connect(bgmGain);
+      osc.start(now);
+      osc.stop(now + theme.tempo/1000);
+      bgmScheduler = setTimeout(scheduleNote, theme.tempo);
+    }
+    scheduleNote();
+  }
+
+  function stopBGM() {
+    if(!bgmGain) return;
+    if(bgmScheduler) { clearTimeout(bgmScheduler); bgmScheduler=null; }
+    bgmGain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.3);
+    const g=bgmGain,a=bgmOscA;
+    setTimeout(()=>{ try{if(a)a.stop();g.disconnect();}catch{} },400);
+    bgmGain=null;bgmOscA=null;
+  }
+
+  return {init,setEnabled,isEnabled,setVolume,getVolume,playNearMiss,playClear,playEvolve,playGameOver,playCountdown,playGo,startBGM,stopBGM};
+})();
+
+/* ─── Render ─── */
+SpiritAscend.Render = (() => {
+  function spiritSVG(form) {
+    const m = 'var(--spirit-main)', s = 'var(--spirit-sub)', g = 'var(--spirit-glow)';
+    const defs = `<defs><filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="sglow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+
+    // フォーム1: 純粋な魔法のオーブ — 精霊の卵 (ステージ1-2)
+    if(form===1) return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">${defs}
+      <ellipse cx="30" cy="72" rx="10" ry="2.5" fill="${m}" opacity="0.18" style="animation:pulse-spirit 2s ease-in-out infinite"/>
+      <circle cx="30" cy="38" r="24" fill="${m}" opacity="0.2" style="animation:pulse-spirit 2.4s ease-in-out infinite"/>
+      <circle cx="30" cy="38" r="19" fill="${m}" opacity="0.28" filter="url(#glow)" style="animation:pulse-spirit 2s ease-in-out infinite 0.3s"/>
+      <circle cx="30" cy="38" r="16" fill="${g}" opacity="0.9" filter="url(#glow)" style="animation:pulse-spirit 1.8s ease-in-out infinite"/>
+      <circle cx="30" cy="38" r="13" fill="${m}" opacity="0.35"/>
+      <ellipse cx="24" cy="30" rx="6" ry="4.5" fill="white" opacity="0.48"/>
+      <circle cx="22" cy="28" r="2.4" fill="white" opacity="0.36"/>
+      <circle cx="53" cy="20" r="2.5" fill="${g}" opacity="0.85" filter="url(#sglow)" style="animation:pulse-spirit 1.5s ease-in-out infinite 0.2s"/>
+      <circle cx="9"  cy="28" r="2"   fill="${m}" opacity="0.75" style="animation:pulse-spirit 1.9s ease-in-out infinite 0.6s"/>
+      <circle cx="50" cy="54" r="1.8" fill="${g}" opacity="0.65" style="animation:pulse-spirit 2.1s ease-in-out infinite 0.9s"/>
+      <circle cx="12" cy="52" r="2.2" fill="${s}" opacity="0.68" style="animation:pulse-spirit 1.7s ease-in-out infinite 1.1s"/>
+      <circle cx="40" cy="13" r="1.5" fill="${g}" opacity="0.72" style="animation:pulse-spirit 2s ease-in-out infinite 0.4s"/>
+      <circle cx="22" cy="16" r="1.2" fill="${m}" opacity="0.6"  style="animation:pulse-spirit 1.6s ease-in-out infinite 0.7s"/>
+    </svg>`;
+
+    // フォーム2: 目覚めのオーブ — 大きなアニメ目が宿る (ステージ3-4)
+    if(form===2) return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">${defs}
+      <ellipse cx="30" cy="73" rx="12" ry="3" fill="${m}" opacity="0.2" style="animation:pulse-spirit 2s ease-in-out infinite"/>
+      <circle cx="30" cy="36" r="23" fill="${m}" opacity="0.2" style="animation:pulse-spirit 2.2s ease-in-out infinite"/>
+      <circle cx="30" cy="36" r="18" fill="${g}" opacity="0.9" filter="url(#glow)" style="animation:hover-spirit 2.5s ease-in-out infinite"/>
+      <circle cx="30" cy="36" r="15" fill="${m}" opacity="0.28"/>
+      <ellipse cx="23" cy="27" rx="5" ry="3.5" fill="white" opacity="0.42"/>
+      <ellipse cx="23" cy="35" rx="4.8" ry="5.5" fill="#1a0636"/>
+      <ellipse cx="37" cy="35" rx="4.8" ry="5.5" fill="#1a0636"/>
+      <ellipse cx="23" cy="34.5" rx="3.2" ry="4" fill="${s}" opacity="0.92"/>
+      <ellipse cx="37" cy="34.5" rx="3.2" ry="4" fill="${s}" opacity="0.92"/>
+      <circle cx="24.8" cy="32" r="1.5" fill="white" opacity="0.95"/>
+      <circle cx="38.8" cy="32" r="1.5" fill="white" opacity="0.95"/>
+      <circle cx="22.5" cy="37" r="0.8" fill="white" opacity="0.55"/>
+      <circle cx="36.5" cy="37" r="0.8" fill="white" opacity="0.55"/>
+      <path d="M26,42.5 Q30,46 34,42.5" stroke="#3d1a6e" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <circle cx="53" cy="19" r="3"   fill="${g}" opacity="0.88" filter="url(#sglow)" style="animation:pulse-spirit 1.5s ease-in-out infinite 0.3s"/>
+      <circle cx="9"  cy="24" r="2.5" fill="${m}" opacity="0.78" style="animation:pulse-spirit 1.8s ease-in-out infinite 0.7s"/>
+      <circle cx="51" cy="52" r="2.2" fill="${g}" opacity="0.68" style="animation:pulse-spirit 2s ease-in-out infinite 1s"/>
+      <circle cx="11" cy="50" r="2"   fill="${s}" opacity="0.65" style="animation:pulse-spirit 1.6s ease-in-out infinite 1.2s"/>
+    </svg>`;
+
+    // フォーム3: 小精霊の芽生え — 頭と体が現れる (ステージ5-6)
+    if(form===3) return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">${defs}
+      <ellipse cx="30" cy="74" rx="13" ry="3.5" fill="${m}" opacity="0.2" style="animation:pulse-spirit 2s ease-in-out infinite"/>
+      <ellipse cx="30" cy="63" rx="7.5" ry="10.5" fill="${s}" opacity="0.72"/>
+      <ellipse cx="30" cy="63" rx="5"   ry="7.5"  fill="${m}" opacity="0.55"/>
+      <circle cx="30" cy="33" r="17" fill="${g}" opacity="0.94" filter="url(#glow)" style="animation:hover-spirit 2.5s ease-in-out infinite"/>
+      <path d="M13,27 Q14,10 30,11 Q46,10 47,27" fill="${s}" opacity="0.88"/>
+      <path d="M15,23 Q18,11 28,10" stroke="${m}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M45,23 Q42,11 32,10" stroke="${m}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.6"/>
+      <ellipse cx="30" cy="13" rx="6" ry="3.5" fill="${s}" opacity="0.82"/>
+      <ellipse cx="30" cy="13" rx="4" ry="2.2" fill="${m}" opacity="0.88"/>
+      <ellipse cx="23" cy="32" rx="4.4" ry="5.2" fill="#1a0636"/>
+      <ellipse cx="37" cy="32" rx="4.4" ry="5.2" fill="#1a0636"/>
+      <ellipse cx="23" cy="31.5" rx="2.9" ry="3.7" fill="${s}" opacity="0.92"/>
+      <ellipse cx="37" cy="31.5" rx="2.9" ry="3.7" fill="${s}" opacity="0.92"/>
+      <circle cx="24.5" cy="29.5" r="1.3" fill="white" opacity="0.95"/>
+      <circle cx="38.5" cy="29.5" r="1.3" fill="white" opacity="0.95"/>
+      <circle cx="22"   cy="34"   r="0.7" fill="white" opacity="0.55"/>
+      <circle cx="36"   cy="34"   r="0.7" fill="white" opacity="0.55"/>
+      <ellipse cx="17" cy="37" rx="3.2" ry="1.6" fill="#f472b6" opacity="0.36"/>
+      <ellipse cx="43" cy="37" rx="3.2" ry="1.6" fill="#f472b6" opacity="0.36"/>
+      <path d="M26,39.5 Q30,43 34,39.5" stroke="#3d1a6e" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <circle cx="10" cy="21" r="4"   fill="${m}" opacity="0.74" filter="url(#sglow)" style="animation:pulse-spirit 1.8s ease-in-out infinite 0.3s"/>
+      <circle cx="10" cy="21" r="2"   fill="${g}" opacity="0.78"/>
+      <circle cx="50" cy="19" r="3.2" fill="${g}" opacity="0.76" style="animation:pulse-spirit 1.6s ease-in-out infinite 0.6s"/>
+      <circle cx="52" cy="42" r="2.5" fill="${s}" opacity="0.62" style="animation:pulse-spirit 2s ease-in-out infinite 0.9s"/>
+      <circle cx="9"  cy="42" r="2"   fill="${g}" opacity="0.58" style="animation:pulse-spirit 1.9s ease-in-out infinite 1.1s"/>
+    </svg>`;
+
+    // フォーム4: ちびアニメ少女精霊 — 全身が現れロッドを持つ (ステージ7-8)
+    if(form===4) return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">${defs}
+      <ellipse cx="30" cy="76" rx="16" ry="4" fill="${m}" opacity="0.22" style="animation:pulse-spirit 2s ease-in-out infinite"/>
+      <path d="M20,55 Q17,71 30,74 Q43,71 40,55 Q35,59 30,59 Q25,59 20,55 Z" fill="${s}" opacity="0.82"/>
+      <path d="M22,56 Q20,67 30,70 Q40,67 38,56 Q34,59 30,59 Q26,59 22,56 Z" fill="${m}" opacity="0.65"/>
+      <ellipse cx="15" cy="54" rx="5" ry="3.2" fill="${g}" opacity="0.88" transform="rotate(-22 15 54)"/>
+      <ellipse cx="45" cy="54" rx="5" ry="3.2" fill="${g}" opacity="0.88" transform="rotate(22 45 54)"/>
+      <ellipse cx="30" cy="51" rx="10" ry="7.5" fill="${g}" opacity="0.9"/>
+      <circle cx="30" cy="31" r="17" fill="${g}" opacity="0.95" filter="url(#glow)" style="animation:hover-spirit 2.5s ease-in-out infinite"/>
+      <path d="M11,29 Q12,10 30,11 Q48,10 49,29" fill="${s}" opacity="0.9"/>
+      <path d="M13,24 Q17,10 28,9" stroke="${m}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <path d="M47,24 Q43,10 32,9" stroke="${m}" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.65"/>
+      <polygon points="30,4 31.8,9 37,9 32.8,12 34.5,17.5 30,14 25.5,17.5 27.2,12 23,9 28.2,9" fill="#fbbf24" opacity="0.93" filter="url(#sglow)"/>
+      <ellipse cx="22" cy="30" rx="4.6" ry="5.6" fill="#1a0636"/>
+      <ellipse cx="38" cy="30" rx="4.6" ry="5.6" fill="#1a0636"/>
+      <ellipse cx="22" cy="29.5" rx="3.1" ry="4.1" fill="${s}" opacity="0.93"/>
+      <ellipse cx="38" cy="29.5" rx="3.1" ry="4.1" fill="${s}" opacity="0.93"/>
+      <ellipse cx="22" cy="28.5" rx="1.8" ry="2"   fill="#9ad8ff" opacity="0.62"/>
+      <ellipse cx="38" cy="28.5" rx="1.8" ry="2"   fill="#9ad8ff" opacity="0.62"/>
+      <circle cx="23.8" cy="27" r="1.3" fill="white" opacity="0.97"/>
+      <circle cx="39.8" cy="27" r="1.3" fill="white" opacity="0.97"/>
+      <circle cx="21"   cy="32.5" r="0.8" fill="white" opacity="0.6"/>
+      <circle cx="37"   cy="32.5" r="0.8" fill="white" opacity="0.6"/>
+      <line x1="18.5" y1="24.5" x2="17" y2="22.5" stroke="#1a0636" stroke-width="0.8"/>
+      <line x1="20.5" y1="24"   x2="20" y2="22"   stroke="#1a0636" stroke-width="0.8"/>
+      <line x1="22.5" y1="23.8" x2="22.5" y2="21.8" stroke="#1a0636" stroke-width="0.8"/>
+      <line x1="34.5" y1="23.8" x2="34.5" y2="21.8" stroke="#1a0636" stroke-width="0.8"/>
+      <line x1="36.5" y1="24"   x2="37"   y2="22"   stroke="#1a0636" stroke-width="0.8"/>
+      <line x1="38.5" y1="24.5" x2="40"   y2="22.5" stroke="#1a0636" stroke-width="0.8"/>
+      <ellipse cx="14.5" cy="34" rx="3.5" ry="1.8" fill="#f472b6" opacity="0.4"/>
+      <ellipse cx="45.5" cy="34" rx="3.5" ry="1.8" fill="#f472b6" opacity="0.4"/>
+      <path d="M25.5,37 Q30,41 34.5,37" stroke="#3d1a6e" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <line x1="46" y1="50" x2="55" y2="25" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="55" cy="23" r="5" fill="#fbbf24" opacity="0.9" filter="url(#sglow)" style="animation:glow-wand 1.4s ease-in-out infinite"/>
+      <circle cx="55" cy="23" r="2.5" fill="white" opacity="0.92"/>
+      <circle cx="8"  cy="19" r="4.5" fill="${m}" opacity="0.78" filter="url(#sglow)" style="animation:pulse-spirit 1.8s ease-in-out infinite 0.2s"/>
+      <circle cx="8"  cy="19" r="2.2" fill="${g}" opacity="0.82"/>
+      <circle cx="52" cy="40" r="3.5" fill="${s}" opacity="0.72" filter="url(#sglow)" style="animation:pulse-spirit 2s ease-in-out infinite 0.5s"/>
+      <circle cx="52" cy="40" r="1.6" fill="${g}" opacity="0.78"/>
+      <circle cx="7"  cy="38" r="2.5" fill="${m}" opacity="0.62" style="animation:pulse-spirit 1.9s ease-in-out infinite 0.8s"/>
+      <circle cx="53" cy="57" r="2"   fill="${g}" opacity="0.58" style="animation:pulse-spirit 2.1s ease-in-out infinite 1.1s"/>
+    </svg>`;
+
+    // フォーム5: 精霊女王の完全進化 — 王冠・グランドロッド・魔法陣 (ステージ9-10)
+    return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">${defs}
+      <circle cx="30" cy="44" r="28" fill="none" stroke="${m}" stroke-width="1" opacity="0.3">
+        <animateTransform attributeName="transform" type="rotate" from="0 30 44" to="360 30 44" dur="6s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="30" cy="44" r="22" fill="none" stroke="${g}" stroke-width="0.8" opacity="0.22">
+        <animateTransform attributeName="transform" type="rotate" from="360 30 44" to="0 30 44" dur="4s" repeatCount="indefinite"/>
+      </circle>
+      <ellipse cx="30" cy="77" rx="17" ry="4.5" fill="${m}" opacity="0.22" style="animation:pulse-spirit 2s ease-in-out infinite"/>
+      <path d="M17,54 Q13,74 30,76 Q47,74 43,54 Q37,60 30,61 Q23,60 17,54 Z" fill="${s}" opacity="0.85"/>
+      <path d="M19,55 Q15,70 30,73 Q45,70 41,55 Q35,60 30,61 Q25,60 19,55 Z" fill="${m}" opacity="0.68"/>
+      <ellipse cx="30" cy="67" rx="9" ry="4.5" fill="${g}" opacity="0.16"/>
+      <ellipse cx="13" cy="53" rx="5.2" ry="3.3" fill="${g}" opacity="0.9" transform="rotate(-28 13 53)"/>
+      <ellipse cx="47" cy="53" rx="5.2" ry="3.3" fill="${g}" opacity="0.9" transform="rotate(28 47 53)"/>
+      <ellipse cx="30" cy="50" rx="10.5" ry="8" fill="${g}" opacity="0.92"/>
+      <circle cx="30" cy="29" r="17.5" fill="${g}" opacity="0.96" filter="url(#glow)" style="animation:hover-spirit 2.5s ease-in-out infinite"/>
+      <path d="M9,27 Q8,6 22,4 Q30,1 38,4 Q52,6 51,27" fill="${s}" opacity="0.92"/>
+      <path d="M11,23 Q10,5 24,3" stroke="${m}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M49,23 Q50,5 36,3" stroke="${m}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+      <path d="M15,10 L18,2 L21,10"  stroke="${m}" stroke-width="2"   fill="none" stroke-linecap="round"/>
+      <path d="M26,6  L30,-1 L34,6"  stroke="${m}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M39,10 L42,2 L45,10" stroke="${m}" stroke-width="2"   fill="none" stroke-linecap="round"/>
+      <circle cx="18" cy="10" r="2"   fill="${g}" opacity="0.95" filter="url(#sglow)"/>
+      <circle cx="30" cy="6"  r="2.8" fill="${g}" opacity="1"    filter="url(#glow)" style="animation:pulse-spirit 1.5s ease-in-out infinite"/>
+      <circle cx="42" cy="10" r="2"   fill="${g}" opacity="0.95" filter="url(#sglow)"/>
+      <ellipse cx="22" cy="28" rx="4.8" ry="5.8" fill="#1a0636"/>
+      <ellipse cx="38" cy="28" rx="4.8" ry="5.8" fill="#1a0636"/>
+      <ellipse cx="22" cy="27.5" rx="3.2" ry="4.2" fill="${s}" opacity="0.94"/>
+      <ellipse cx="38" cy="27.5" rx="3.2" ry="4.2" fill="${s}" opacity="0.94"/>
+      <ellipse cx="22" cy="26.5" rx="1.9" ry="2.2" fill="#b8e4ff" opacity="0.65"/>
+      <ellipse cx="38" cy="26.5" rx="1.9" ry="2.2" fill="#b8e4ff" opacity="0.65"/>
+      <circle cx="24" cy="25"   r="1.4" fill="white" opacity="0.98"/>
+      <circle cx="40" cy="25"   r="1.4" fill="white" opacity="0.98"/>
+      <circle cx="21" cy="30.5" r="0.9" fill="white" opacity="0.65"/>
+      <circle cx="37" cy="30.5" r="0.9" fill="white" opacity="0.65"/>
+      <line x1="17.5" y1="22.5" x2="16" y2="20"   stroke="#1a0636" stroke-width="0.9"/>
+      <line x1="19.5" y1="22"   x2="19" y2="19.5" stroke="#1a0636" stroke-width="0.9"/>
+      <line x1="21.5" y1="21.8" x2="21.5" y2="19.3" stroke="#1a0636" stroke-width="0.9"/>
+      <line x1="33.5" y1="21.8" x2="33.5" y2="19.3" stroke="#1a0636" stroke-width="0.9"/>
+      <line x1="35.5" y1="22"   x2="35.5" y2="19.5" stroke="#1a0636" stroke-width="0.9"/>
+      <line x1="37.5" y1="22.5" x2="39.5" y2="20"   stroke="#1a0636" stroke-width="0.9"/>
+      <ellipse cx="14" cy="32" rx="3.8" ry="2"   fill="#f472b6" opacity="0.42"/>
+      <ellipse cx="46" cy="32" rx="3.8" ry="2"   fill="#f472b6" opacity="0.42"/>
+      <path d="M25.5,35 Q30,39 34.5,35" stroke="#3d1a6e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <line x1="47" y1="52" x2="58" y2="23" stroke="#fbbf24" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="58" cy="21" r="6"   fill="#fbbf24" opacity="0.9" filter="url(#glow)" style="animation:glow-wand 1.2s ease-in-out infinite"/>
+      <circle cx="58" cy="21" r="3"   fill="white"   opacity="0.96"/>
+      <circle cx="6"  cy="16" r="5"   fill="${m}" opacity="0.82" filter="url(#sglow)" style="animation:pulse-spirit 1.8s ease-in-out infinite 0.1s"/>
+      <circle cx="6"  cy="16" r="2.5" fill="${g}" opacity="0.88"/>
+      <circle cx="54" cy="37" r="4.5" fill="${s}" opacity="0.78" filter="url(#sglow)" style="animation:pulse-spirit 1.7s ease-in-out infinite 0.4s"/>
+      <circle cx="54" cy="37" r="2.2" fill="${g}" opacity="0.82"/>
+      <circle cx="5"  cy="36" r="3.5" fill="${m}" opacity="0.7"  style="animation:pulse-spirit 1.9s ease-in-out infinite 0.65s"/>
+      <circle cx="5"  cy="36" r="1.6" fill="${g}" opacity="0.75"/>
+      <circle cx="54" cy="55" r="3"   fill="${s}" opacity="0.65" style="animation:pulse-spirit 2s ease-in-out infinite 0.9s"/>
+      <circle cx="6"  cy="52" r="2.5" fill="${g}" opacity="0.6"  style="animation:pulse-spirit 2.1s ease-in-out infinite 1.1s"/>
+    </svg>`;
+  }
+
+  function obstacleSVG(type) {
+    if(type===1) return `<svg viewBox="0 0 30 30" width="56" height="56" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="og"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <line x1="24" y1="4" x2="6" y2="26" stroke="white" stroke-width="2" stroke-linecap="round" filter="url(#og)"/>
+      <circle cx="24" cy="4" r="3" fill="#fbbf24" filter="url(#og)"/>
+    </svg>`;
+    if(type===2) return `<svg viewBox="0 0 26 26" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="og"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <circle cx="13" cy="13" r="10" fill="#7dd3fc" filter="url(#og)" opacity="0.9"/>
+      <circle cx="13" cy="13" r="5" fill="#e0f2fe" opacity="0.6"/>
+    </svg>`;
+    if(type===3) return `<svg viewBox="0 0 28 24" width="54" height="48" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="og"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <path d="M20,4 A12,12 0 1,1 4,20 A8,8 0 1,0 20,4 Z" fill="#fef9c3" filter="url(#og)"/>
+    </svg>`;
+    if(type===4) return `<svg viewBox="0 0 22 30" width="46" height="60" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="og"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <path d="M11,2 Q18,10 18,18 Q18,28 11,28 Q4,28 4,18 Q4,10 11,2 Z" fill="#f97316" filter="url(#og)"/>
+      <path d="M11,8 Q15,14 15,19 Q15,24 11,24 Q7,24 7,19 Q7,14 11,8 Z" fill="#fbbf24" opacity="0.7"/>
+    </svg>`;
+    return `<svg viewBox="0 0 32 32" width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="og"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <circle cx="16" cy="16" r="14" fill="none" stroke="#e879f9" stroke-width="2" filter="url(#og)">
+        <animateTransform attributeName="transform" type="rotate" from="0 16 16" to="360 16 16" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="16" cy="16" r="8" fill="none" stroke="#60a5fa" stroke-width="2.5" opacity="0.8">
+        <animateTransform attributeName="transform" type="rotate" from="360 16 16" to="0 16 16" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="16" cy="16" r="3" fill="#f5f3ff" filter="url(#og)"/>
+    </svg>`;
+  }
+
+  function setSpiritEl(el, form) {
+    el.innerHTML = spiritSVG(form);
+  }
+
+  return {spiritSVG,obstacleSVG,setSpiritEl};
+})();
+
+/* ─── Game ─── */
+SpiritAscend.Game = (() => {
+  const C = SpiritAscend.Config;
+  const R = SpiritAscend.Render;
+  const S = SpiritAscend.Sound;
+
+  let rafId=null, running=false;
+  let currentStage=1, currentForm=1;
+  let spiritX=0, spiritY=0;
+  let gameW=0, gameH=0;
+  let score=0, elapsed=0, spawnTimer=0, scoreTimer=0;
+  let lastTs=null;
+  let obstacles=[], nextId=0;
+  let perfect=true;
+  let input={left:false,right:false,targetX:null};
+  let activePointers={};
+
+  const spiritEl = document.getElementById('spirit-el');
+  const gameArea = document.getElementById('game-area');
+  const hudStage = document.getElementById('hud-stage');
+  const hudScore = document.getElementById('hud-score');
+  const hudTimer = document.getElementById('hud-timer');
+
+  function init(stage) {
+    currentStage = stage;
+    currentForm = C.getSpiritForm(stage);
+    const cfg = C.getStage(stage);
+
+    score=0; elapsed=0; spawnTimer=0; scoreTimer=0; lastTs=null;
+    obstacles=[]; nextId=0; perfect=true;
+    input={left:false,right:false,targetX:null};
+    activePointers={};
+
+    const rect = gameArea.getBoundingClientRect();
+    gameW = rect.width; gameH = rect.height;
+
+    spiritX = gameW/2;
+    spiritY = gameH - 80;
+
+    R.setSpiritEl(spiritEl, currentForm);
+    spiritEl.style.width = '60px';
+    spiritEl.style.height = '80px';
+    spiritEl.style.bottom = '40px';
+    spiritEl.style.left = spiritX - 30 + 'px';
+    spiritEl.style.top = 'auto';
+
+    hudStage.textContent = 'Stage '+stage;
+    hudScore.textContent = '0点';
+    hudTimer.textContent = cfg.timeLimit;
+    hudTimer.classList.remove('urgent');
+
+    bindInput();
+  }
+
+  function start() {
+    if(running) return;
+    running=true;
+    S.startBGM(currentStage);
+    // 妖精が小さな光の円から徐々に大きな姿へ
+    spiritEl.classList.remove('spirit-born');
+    void spiritEl.offsetWidth;
+    spiritEl.classList.add('spirit-born');
+    setTimeout(()=>spiritEl.classList.remove('spirit-born'), 1600);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function stop() {
+    running=false;
+    if(rafId) { cancelAnimationFrame(rafId); rafId=null; }
+    S.stopBGM();
+    unbindInput();
+    clearObstacles();
+  }
+
+  function loop(ts) {
+    if(!running) return;
+    if(!lastTs) lastTs = ts;
+    const delta = Math.min(ts-lastTs, 50);
+    lastTs = ts;
+
+    const cfg = C.getStage(currentStage);
+    elapsed += delta;
+    const remaining = cfg.timeLimit - elapsed/1000;
+
+    if(remaining <= 0) {
+      stop();
+      SpiritAscend.UI.onStageClear(currentStage, score, perfect);
+      return;
+    }
+
+    // Spirit move
+    const sp = C.SPIRIT_SPEED;
+    if(input.targetX !== null) {
+      const diff = input.targetX - spiritX;
+      spiritX += Math.sign(diff)*Math.min(Math.abs(diff), sp*delta);
+    } else {
+      if(input.left) spiritX -= sp*delta;
+      if(input.right) spiritX += sp*delta;
+    }
+    spiritX = Math.max(C.SPIRIT_R, Math.min(gameW-C.SPIRIT_R, spiritX));
+
+    // Spawn
+    spawnTimer += delta;
+    if(spawnTimer >= cfg.spawnInterval) {
+      spawnObstacle(cfg);
+      spawnTimer = 0;
+    }
+
+    // Update obstacles
+    const speed = cfg.baseSpeed + cfg.speedInc*(elapsed/1000);
+    for(let i=obstacles.length-1;i>=0;i--) {
+      const obs = obstacles[i];
+
+      if(obs.type===1) {
+        // 流れ星: 斜め落下、壁で跳ね返る
+        obs.x += (obs.vx||0)*delta;
+        obs.y += speed*delta;
+        if(obs.x<8)  { obs.x=8;  obs.vx=Math.abs(obs.vx||0); }
+        if(obs.x>gameW-8) { obs.x=gameW-8; obs.vx=-Math.abs(obs.vx||0); }
+      } else if(obs.type===2) {
+        // 魔法の球: サイン波
+        obs.phase += obs.waveSpeed*delta;
+        obs.x = Math.max(8, Math.min(gameW-8, obs.startX + Math.sin(obs.phase)*obs.amplitude));
+        obs.y += speed*delta;
+      } else if(obs.type===3) {
+        // 三日月: ジグザグ
+        obs.zigzagTimer += delta;
+        if(obs.zigzagTimer >= obs.zigzagInterval) {
+          obs.vx = -obs.vx;
+          obs.zigzagTimer = 0;
+          obs.zigzagInterval = Math.max(150, obs.zigzagInterval*0.95 + Math.random()*100);
+        }
+        obs.x += (obs.vx||0)*delta;
+        obs.y += speed*delta;
+        if(obs.x<8)  { obs.x=8;  obs.vx=Math.abs(obs.vx||0); }
+        if(obs.x>gameW-8) { obs.x=gameW-8; obs.vx=-Math.abs(obs.vx||0); }
+      } else if(obs.type===4) {
+        // 炎弾: チャージ→スナイプ型（チャージ中に狙い定め、発射後は固定目標へ）
+        if(obs.preChargeLeft > 0) {
+          obs.preChargeLeft -= delta;
+          obs.targetX = spiritX;
+          obs.y += speed * 0.25 * delta;
+          obs.homingPhase = true;
+        } else if(obs.homingPhase) {
+          obs.homingTimeLeft -= delta;
+          if(obs.homingTimeLeft <= 0) obs.homingPhase = false;
+          const dx = obs.targetX - obs.x;
+          obs.vx += dx * obs.homingStr * delta;
+          obs.vx *= 0.988;
+          obs.vx = Math.max(-speed*2.0, Math.min(speed*2.0, obs.vx));
+          obs.x += obs.vx * delta;
+          obs.y += speed * delta;
+        } else {
+          obs.vx *= 0.97;
+          obs.x += obs.vx * delta;
+          obs.y += speed * delta;
+        }
+      } else if(obs.type===5) {
+        // 光の渦: スパイラル
+        obs.angle += obs.angleSpd*delta;
+        obs.spiralR = Math.min((obs.spiralR||0) + obs.spiralGrowth*delta, 55);
+        obs.x = Math.max(8, Math.min(gameW-8, obs.centerX + Math.cos(obs.angle)*obs.spiralR));
+        obs.y += speed*0.75*delta;
+      } else {
+        obs.y += speed*delta;
+      }
+
+      if(obs.y > gameH+40) {
+        obs.el.remove();
+        obstacles.splice(i,1);
+        continue;
+      }
+      obs.el.style.transform = `translate(${obs.x-16}px,${obs.y}px)`;
+    }
+
+    // Collisions
+    if(!checkCollisions()) return;
+
+    // Score per second
+    scoreTimer += delta;
+    if(scoreTimer >= 1000) {
+      score += C.SCORES.perSecond;
+      scoreTimer -= 1000;
+    }
+
+    // HUD
+    hudScore.textContent = score.toLocaleString()+'点';
+    const rem = Math.ceil(remaining);
+    hudTimer.textContent = rem;
+    hudTimer.classList.toggle('urgent', rem<=5);
+
+    // Spirit position
+    spiritEl.style.left = (spiritX-30)+'px';
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function spawnObstacle(cfg) {
+    const type = C.pickObstacleType(currentStage);
+    let x, attempts=0;
+    do {
+      x = 24 + Math.random()*(gameW-48);
+      attempts++;
+    } while(Math.abs(x-spiritX)<50 && attempts<10);
+
+    const el = document.createElement('div');
+    el.className = 'obstacle';
+    el.innerHTML = R.obstacleSVG(type);
+    el.style.position = 'absolute';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.pointerEvents = 'none';
+    gameArea.appendChild(el);
+
+    const r = SpiritAscend.Config.OBSTACLES[type-1].radius;
+    const spd = cfg.baseSpeed + cfg.speedInc*(elapsed/1000);
+    const stg = currentStage;
+    const obs = {type, x, y:-20, radius:r, el, nearMissed:false};
+
+    if(type===1) {
+      // 流れ星: 斜め落下
+      const dir = Math.random()<0.5 ? -1 : 1;
+      obs.vx = dir * spd * (0.5 + stg*0.05);
+    } else if(type===2) {
+      // 魔法の球: サイン波
+      obs.startX = x;
+      obs.phase = Math.random()*Math.PI*2;
+      obs.amplitude = 25 + stg*4;
+      obs.waveSpeed = 0.0025 + stg*0.0002;
+    } else if(type===3) {
+      // 三日月: ジグザグ
+      obs.vx = (Math.random()<0.5 ? -1 : 1) * spd * (0.7 + stg*0.05);
+      obs.zigzagTimer = 0;
+      obs.zigzagInterval = Math.max(150, 500 - stg*25) + Math.random()*200;
+    } else if(type===4) {
+      // 炎弾: チャージ→スナイプ型
+      obs.vx = 0;
+      obs.preChargeLeft = 350 + Math.random()*250;
+      obs.targetX = spiritX;
+      obs.homingPhase = false;
+      obs.homingTimeLeft = 900 + Math.random()*400;
+      obs.homingStr = 0.0010 + stg*0.00006;
+    } else if(type===5) {
+      // 光の渦: スパイラル
+      obs.centerX = x;
+      obs.angle = Math.random()*Math.PI*2;
+      obs.spiralR = 0;
+      obs.spiralGrowth = 0.04 + stg*0.004;
+      obs.angleSpd = 0.004 + stg*0.0003;
+    }
+
+    obstacles.push(obs);
+  }
+
+  function checkCollisions() {
+    const sx = spiritX, sy = spiritY;
+    for(const obs of obstacles) {
+      const dist = Math.hypot(obs.x-sx, obs.y-sy);
+      const hit = C.SPIRIT_R + obs.radius;
+      if(dist < hit) {
+        stop();
+        perfect = false;
+        SpiritAscend.Sound.playGameOver();
+        SpiritAscend.UI.onGameOver(currentStage, score);
+        return false;
+      }
+      if(!obs.nearMissed && dist < hit*1.5) {
+        obs.nearMissed = true;
+        score += C.SCORES.nearMiss;
+        S.playNearMiss();
+        showNearMiss(obs.x, obs.y);
+      }
+    }
+    return true;
+  }
+
+  function showNearMiss(x, y) {
+    const el = document.createElement('div');
+    el.className = 'near-miss-text';
+    el.textContent = 'NICE! +50';
+    el.style.left = x+'px';
+    el.style.top = y+'px';
+    gameArea.appendChild(el);
+    setTimeout(()=>el.remove(), 800);
+  }
+
+  function clearObstacles() {
+    obstacles.forEach(o=>o.el.remove());
+    obstacles=[];
+  }
+
+  // Input binding
+  function onKeyDown(e) {
+    if(e.key==='ArrowLeft'||e.key==='a') input.left=true;
+    if(e.key==='ArrowRight'||e.key==='d') input.right=true;
+  }
+  function onKeyUp(e) {
+    if(e.key==='ArrowLeft'||e.key==='a') input.left=false;
+    if(e.key==='ArrowRight'||e.key==='d') input.right=false;
+  }
+  function onPointerDown(e) {
+    e.preventDefault();
+    SpiritAscend.Sound.init();
+    const rect = gameArea.getBoundingClientRect();
+    const relX = e.clientX - rect.left;
+    activePointers[e.pointerId] = relX;
+    updatePointerInput();
+  }
+  function onPointerMove(e) {
+    if(!activePointers[e.pointerId] && !Object.keys(activePointers).length) return;
+    const rect = gameArea.getBoundingClientRect();
+    activePointers[e.pointerId] = e.clientX - rect.left;
+    updatePointerInput();
+  }
+  function onPointerUp(e) {
+    delete activePointers[e.pointerId];
+    updatePointerInput();
+  }
+  function updatePointerInput() {
+    const pts = Object.values(activePointers);
+    if(!pts.length) { input.left=false; input.right=false; input.targetX=null; return; }
+    const avgX = pts.reduce((a,b)=>a+b,0)/pts.length;
+    if(pts.length===1) {
+      // Tap left/right half
+      if(avgX < gameW/2) { input.left=true; input.right=false; input.targetX=null; }
+      else { input.right=true; input.left=false; input.targetX=null; }
+    } else {
+      input.targetX = avgX;
+    }
+  }
+  function onMouseMove(e) {
+    if(!running) return;
+    const rect = gameArea.getBoundingClientRect();
+    input.targetX = e.clientX - rect.left;
+    input.left=false; input.right=false;
+  }
+
+  function bindInput() {
+    document.addEventListener('keydown',onKeyDown);
+    document.addEventListener('keyup',onKeyUp);
+    gameArea.addEventListener('pointerdown',onPointerDown,{passive:false});
+    gameArea.addEventListener('pointermove',onPointerMove,{passive:true});
+    gameArea.addEventListener('pointerup',onPointerUp);
+    gameArea.addEventListener('pointercancel',onPointerUp);
+    gameArea.addEventListener('mousemove',onMouseMove,{passive:true});
+  }
+  function unbindInput() {
+    document.removeEventListener('keydown',onKeyDown);
+    document.removeEventListener('keyup',onKeyUp);
+    gameArea.removeEventListener('pointerdown',onPointerDown);
+    gameArea.removeEventListener('pointermove',onPointerMove);
+    gameArea.removeEventListener('pointerup',onPointerUp);
+    gameArea.removeEventListener('pointercancel',onPointerUp);
+    gameArea.removeEventListener('mousemove',onMouseMove);
+  }
+
+  function getCurrentStage() { return currentStage; }
+  function getCurrentForm() { return currentForm; }
+
+  return {init,start,stop,getCurrentStage,getCurrentForm};
+})();
+
+/* ─── UI ─── */
+SpiritAscend.UI = (() => {
+  const $ = id => document.getElementById(id);
+  const St = SpiritAscend.Storage;
+  const Snd = SpiritAscend.Sound;
+  const R = SpiritAscend.Render;
+  const C = SpiritAscend.Config;
+  const G = SpiritAscend.Game;
+
+  let notifTimer = null;
+  let pendingResult = null;
+  let countdownActive = false;
+
+  function notify(msg) {
+    const el = $('notification');
+    el.textContent = msg;
+    el.classList.add('show');
+    if(notifTimer) clearTimeout(notifTimer);
+    notifTimer = setTimeout(()=>el.classList.remove('show'), 3000);
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+    $(id).classList.add('active');
+  }
+
+  function updateGenderClass() {
+    const g = St.get().gender||'neutral';
+    document.body.className = 'gender-'+g;
+  }
+
+  // ── Title ──
+  function initTitle() {
+    updateGenderClass();
+    const form = C.getSpiritForm(St.get().clearedStages.length>0 ? Math.max(...St.get().clearedStages) : 1);
+    const el = $('title-spirit');
+    if(el) el.innerHTML = R.spiritSVG(form);
+
+    $('btn-start').addEventListener('pointerdown', e=>{
+      e.preventDefault(); Snd.init();
+      const g = St.get().gender;
+      if(g===null) showScreen('screen-gender');
+      else showScreen('screen-stage-select'), buildStageGrid();
+    });
+    $('btn-settings-title').addEventListener('pointerdown', e=>{ e.preventDefault(); openSettings(); });
+  }
+
+  // ── Gender ──
+  function initGender() {
+    let selected = 'neutral';
+    document.querySelectorAll('.gender-card').forEach(card=>{
+      card.addEventListener('pointerdown', e=>{
+        e.preventDefault();
+        document.querySelectorAll('.gender-card').forEach(c=>c.classList.remove('selected'));
+        card.classList.add('selected');
+        selected = card.dataset.gender;
+      });
+    });
+    $('btn-gender-ok').addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      St.get().gender = selected;
+      St.save();
+      updateGenderClass();
+      showScreen('screen-stage-select');
+      buildStageGrid();
+    });
+    $('btn-gender-skip').addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      if(!St.get().gender) { St.get().gender='neutral'; St.save(); }
+      updateGenderClass();
+      showScreen('screen-stage-select');
+      buildStageGrid();
+    });
+  }
+
+  // ── Stage Grid ──
+  function buildStageGrid() {
+    const grid = $('stage-grid');
+    grid.innerHTML='';
+    const cleared = St.get().clearedStages;
+    const maxUnlocked = cleared.length===0 ? 1 : Math.min(Math.max(...cleared)+1, 10);
+    for(let i=1;i<=10;i++) {
+      const btn = document.createElement('button');
+      btn.className = 'stage-btn';
+      const isCleared = cleared.includes(i);
+      const isLocked = i>maxUnlocked;
+      if(isCleared) btn.classList.add('cleared');
+      if(isLocked) btn.classList.add('locked');
+      btn.innerHTML = `<span class="stage-num">${i}</span><span class="stage-star">${isCleared?'★':''}</span>`;
+      if(!isLocked) {
+        btn.addEventListener('pointerdown', e=>{
+          e.preventDefault();
+          e.stopPropagation();
+          startCountdown(i);
+        }, {once:true});
+      }
+      grid.appendChild(btn);
+    }
+  }
+
+  $('btn-to-title').addEventListener('pointerdown', e=>{ e.preventDefault(); showScreen('screen-title'); });
+  $('btn-settings-stage').addEventListener('pointerdown', e=>{ e.preventDefault(); openSettings(); });
+
+  // ── Countdown ──
+  function startCountdown(stage) {
+    if(countdownActive) return;
+    countdownActive = true;
+    showScreen('screen-countdown');
+    $('countdown-stage-label').textContent = 'Stage '+stage;
+    let count = 3;
+    const numEl = $('countdown-num');
+
+    function tick() {
+      numEl.style.animation='none';
+      void numEl.offsetWidth;
+      numEl.style.animation='countdown-pop 0.5s ease-out';
+      if(count>0) {
+        numEl.textContent = count;
+        Snd.playCountdown();
+        count--;
+        setTimeout(tick, 1000);
+      } else {
+        numEl.textContent = 'GO!';
+        Snd.playGo();
+        setTimeout(()=>{
+          showScreen('screen-game');
+          G.init(stage);
+          G.start();
+          countdownActive = false;
+        }, 700);
+      }
+    }
+    tick();
+  }
+
+  // ── Game callbacks ──
+  function onStageClear(stage, score, perfect) {
+    countdownActive = false;
+    Snd.playClear();
+    const prevForm = C.getSpiritForm(stage);
+    St.markCleared(stage);
+    St.get().playCount++;
+
+    if(perfect) { score += C.SCORES.perfect; St.get().perfectCount++; }
+    score += C.SCORES.stageClear;
+    if(score > St.get().highScore) St.get().highScore = score;
+    St.get().totalScore += score;
+    St.save();
+
+    const nextForm = C.getSpiritForm(stage+1);
+    const evolved = nextForm > prevForm;
+
+    if(evolved && stage<10) {
+      showEvolveOverlay(nextForm, ()=>{
+        if(stage===10) showAllClear(score);
+        else showResult(stage, score, true, perfect);
+      });
+    } else {
+      if(stage===10) showAllClear(score);
+      else showResult(stage, score, true, perfect);
+    }
+  }
+
+  function onGameOver(stage, score) {
+    countdownActive = false;
+    St.get().playCount++;
+    if(score>St.get().highScore) St.get().highScore=score;
+    St.get().totalScore+=score;
+    St.save();
+    setTimeout(()=>showResult(stage, score, false, false), 500);
+  }
+
+  // ── Evolve Overlay ──
+  function showEvolveOverlay(newForm, cb) {
+    const overlay = $('evolve-overlay');
+    const spiritDiv = $('evolve-spirit');
+    spiritDiv.innerHTML = R.spiritSVG(newForm);
+    spiritDiv.classList.remove('animating');
+    void spiritDiv.offsetWidth;
+    spiritDiv.classList.add('animating');
+    overlay.classList.add('active');
+    Snd.playEvolve();
+    setTimeout(()=>{
+      overlay.classList.remove('active');
+      cb();
+    }, 2000);
+  }
+
+  // ── Result Screen ──
+  function showResult(stage, score, cleared, perfect) {
+    showScreen('screen-result');
+    const titleEl = $('result-title');
+    const msgEl = $('result-msg');
+    const statsEl = $('result-stats');
+    const spiritDiv = $('result-spirit');
+    const form = C.getSpiritForm(stage);
+
+    spiritDiv.innerHTML = R.spiritSVG(form);
+
+    if(cleared) {
+      titleEl.textContent = '✨ STAGE CLEAR ✨';
+      titleEl.className = 'clear';
+      msgEl.textContent = C.getClearMessage();
+    } else {
+      titleEl.textContent = '💫 GAME OVER';
+      titleEl.className = 'gameover';
+      msgEl.textContent = `Stage ${stage} 到達`;
+    }
+
+    let rows = `
+      <div class="result-row"><span class="result-label">スコア</span><span class="result-val gold">${score.toLocaleString()}点</span></div>
+      <div class="result-row"><span class="result-label">到達ステージ</span><span class="result-val">Stage ${stage}</span></div>
+    `;
+    if(cleared&&perfect) rows+=`<div class="result-row"><span class="result-label">パーフェクト！</span><span class="result-val gold">+${C.SCORES.perfect}点</span></div>`;
+    rows+=`<div class="result-row"><span class="result-label">ベストスコア</span><span class="result-val">${St.get().highScore.toLocaleString()}点</span></div>`;
+    statsEl.innerHTML = rows;
+
+    pendingResult = {stage, score, cleared};
+
+    const saveForm = $('save-form');
+    const actBtns = $('result-action-buttons');
+    actBtns.innerHTML = '';
+
+    if(!cleared) {
+      saveForm.style.display='block';
+      $('save-name-form').style.display='none';
+      $('save-choice-buttons').style.display='flex';
+    } else {
+      saveForm.style.display='none';
+      buildResultActions(stage, cleared, actBtns);
+    }
+  }
+
+  function buildResultActions(stage, cleared, container) {
+    container.innerHTML='';
+    const nextStage = stage + 1;
+    if(cleared && stage<10) {
+      const b = document.createElement('button');
+      b.className='btn primary'; b.textContent='次のステージへ'; b.style.width='180px';
+      b.addEventListener('pointerdown', e=>{
+        e.preventDefault(); e.stopPropagation();
+        startCountdown(nextStage);
+      }, {once:true});
+      container.appendChild(b);
+    }
+    const b2 = document.createElement('button');
+    b2.className='btn'; b2.textContent='リトライ'; b2.style.width='120px';
+    b2.addEventListener('pointerdown', e=>{
+      e.preventDefault(); e.stopPropagation();
+      startCountdown(stage);
+    }, {once:true});
+    container.appendChild(b2);
+    const b3 = document.createElement('button');
+    b3.className='btn'; b3.textContent='ステージ選択'; b3.style.width='140px';
+    b3.addEventListener('pointerdown', e=>{
+      e.preventDefault(); e.stopPropagation();
+      showScreen('screen-stage-select'); buildStageGrid();
+    }, {once:true});
+    container.appendChild(b3);
+  }
+
+  $('btn-save-yes').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    $('save-choice-buttons').style.display='none';
+    const nameInput = $('name-input');
+    nameInput.value = St.get().playerName!=='冒険者' ? St.get().playerName : '';
+    nameInput.placeholder = St.get().playerName;
+    $('save-name-form').style.display='block';
+  });
+  $('btn-save-no').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    $('save-form').style.display='none';
+    buildResultActions(pendingResult.stage, pendingResult.cleared, $('result-action-buttons'));
+  });
+  $('btn-save-confirm').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    const name = $('name-input').value.trim().slice(0,8) || St.get().playerName;
+    St.get().playerName = name;
+    St.saveRanking({name, score:pendingResult.score, stage:pendingResult.stage, date:new Date().toISOString().slice(0,10)});
+    notify('記録を保存しました！');
+    $('save-form').style.display='none';
+    buildResultActions(pendingResult.stage, pendingResult.cleared, $('result-action-buttons'));
+  });
+
+  // ── All Clear ──
+  function showAllClear(score) {
+    showScreen('screen-all-clear');
+    const spiritDiv = $('all-clear-spirit');
+    spiritDiv.innerHTML = R.spiritSVG(5);
+    const statsDiv = $('all-clear-stats');
+    statsDiv.innerHTML=`
+      <div class="result-row"><span class="result-label">総合スコア</span><span class="result-val gold">${score.toLocaleString()}点</span></div>
+      <div class="result-row"><span class="result-label">パーフェクト</span><span class="result-val">${St.get().perfectCount}回</span></div>
+      <div class="result-row"><span class="result-label">総プレイ回数</span><span class="result-val">${St.get().playCount}回</span></div>
+    `;
+    // 全クリア時に保存フォームを表示
+    pendingResult = {stage:10, score, cleared:true};
+    const acSaveForm = $('allclear-save-form');
+    if(St.get().settings.saveOnResult) {
+      acSaveForm.style.display='block';
+      $('allclear-name-input').value = St.get().playerName!=='冒険者' ? St.get().playerName : '';
+      $('allclear-name-input').placeholder = St.get().playerName;
+    } else {
+      acSaveForm.style.display='none';
+    }
+  }
+
+  $('btn-allclear-save-yes').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    const name = $('allclear-name-input').value.trim().slice(0,8) || St.get().playerName;
+    St.get().playerName = name;
+    St.saveRanking({name, score:pendingResult.score, stage:10, date:new Date().toISOString().slice(0,10)});
+    $('allclear-save-form').style.display='none';
+    notify('記録を保存しました！');
+  });
+  $('btn-allclear-save-no').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    $('allclear-save-form').style.display='none';
+  });
+
+  // Canvas share card
+  const canvasSupported = typeof CanvasRenderingContext2D !== 'undefined';
+  if(!canvasSupported) document.querySelectorAll('#btn-share').forEach(b=>b.style.display='none');
+
+  $('btn-share').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    generateShareCard();
+  });
+
+  function generateShareCard() {
+    const canvas = $('share-canvas');
+    const ctx = canvas.getContext('2d');
+    const w=400,h=300;
+    const st = St.get();
+
+    // Background
+    const grad = ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,'#0d0d2b');
+    grad.addColorStop(1,'#1a0a3a');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,0,w,h);
+
+    // Border
+    ctx.strokeStyle='#a78bfa';
+    ctx.lineWidth=2;
+    ctx.strokeRect(4,4,w-8,h-8);
+
+    // Title
+    ctx.fillStyle='#a78bfa';
+    ctx.font='bold 28px sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('✦ Spirit Ascend',w/2,50);
+
+    ctx.fillStyle='#eef';
+    ctx.font='16px sans-serif';
+    ctx.fillText('〜精霊の試練〜',w/2,75);
+
+    // Stats
+    ctx.textAlign='left';
+    ctx.font='bold 18px sans-serif';
+    ctx.fillStyle='#fbbf24';
+    ctx.fillText('プレイヤー: '+st.playerName,60,130);
+    ctx.fillStyle='#eef';
+    ctx.font='16px sans-serif';
+    ctx.fillText('ベストスコア: '+st.highScore.toLocaleString()+'点',60,160);
+    ctx.fillText('クリアステージ: '+st.clearedStages.length+'/10',60,185);
+    ctx.fillText('パーフェクト: '+st.perfectCount+'回',60,210);
+
+    // Hashtag
+    ctx.textAlign='center';
+    ctx.fillStyle='#a78bfa';
+    ctx.font='14px sans-serif';
+    ctx.fillText('#SpiritAscend  #精霊の試練',w/2,260);
+
+    // Download
+    const link = document.createElement('a');
+    link.download='spirit-ascend.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  $('btn-allclear-menu').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    showScreen('screen-title');
+    updateGenderClass();
+  });
+
+  // ── Settings ──
+  function openSettings() {
+    const st = St.get();
+    $('setting-name-input').value = st.playerName!=='冒険者' ? st.playerName : '';
+    $('setting-name-input').placeholder = st.playerName;
+    const ts = $('toggle-sound');
+    const tv = $('toggle-save');
+    ts.classList.toggle('on', st.settings.soundEnabled);
+    tv.classList.toggle('on', st.settings.saveOnResult);
+    $('setting-volume').value = Math.round((st.settings.volume||0.7)*100);
+    $('modal-settings').classList.add('active');
+  }
+
+  $('toggle-sound').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    const st = St.get();
+    st.settings.soundEnabled = !st.settings.soundEnabled;
+    Snd.setEnabled(st.settings.soundEnabled);
+    $('toggle-sound').classList.toggle('on', st.settings.soundEnabled);
+    St.save();
+  });
+  $('toggle-save').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    const st = St.get();
+    st.settings.saveOnResult = !st.settings.saveOnResult;
+    $('toggle-save').classList.toggle('on', st.settings.saveOnResult);
+    St.save();
+  });
+  $('setting-volume').addEventListener('input', e=>{
+    const v = parseInt(e.target.value)/100;
+    St.get().settings.volume = v;
+    Snd.setVolume(v);
+    St.save();
+  });
+  document.querySelectorAll('[data-gender-set]').forEach(btn=>{
+    btn.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      const g = btn.dataset.genderSet;
+      St.get().gender = g;
+      St.save();
+      updateGenderClass();
+      notify('精霊の見た目を変更しました');
+    });
+  });
+  $('setting-name-input').addEventListener('input', e=>{
+    const v = e.target.value.trim().slice(0,8);
+    if(v) { St.get().playerName=v; St.save(); }
+  });
+  $('btn-reset-data').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    if(confirm('記録をすべて消しますか？この操作は取り消せません。')) {
+      St.reset();
+      updateGenderClass();
+      notify('記録をリセットしました');
+      $('modal-settings').classList.remove('active');
+      showScreen('screen-title');
+    }
+  });
+  $('close-settings').addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    $('modal-settings').classList.remove('active');
+  });
+
+  // ── Ranking ──
+  function openRanking() {
+    const list = $('ranking-list');
+    const ranking = St.get().ranking;
+    if(!ranking.length) {
+      list.innerHTML='<p style="opacity:0.5;font-size:0.9rem;text-align:center;padding:20px">記録がありません</p>';
+    } else {
+      list.innerHTML = ranking.map((r,i)=>{
+        const cls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+        return `<div class="ranking-item">
+          <span class="rank-num ${cls}">${i+1}</span>
+          <span class="rank-name">${r.name||'冒険者'}</span>
+          <span class="rank-score">${(r.score||0).toLocaleString()}点</span>
+          <span class="rank-stage">St.${r.stage||1}</span>
+        </div>`;
+      }).join('');
+    }
+    $('modal-ranking').classList.add('active');
+  }
+  $('btn-ranking').addEventListener('pointerdown', e=>{ e.preventDefault(); openRanking(); });
+  $('close-ranking').addEventListener('pointerdown', e=>{ e.preventDefault(); $('modal-ranking').classList.remove('active'); });
+
+  function init() {
+    initTitle();
+    initGender();
+  }
+
+  return {init,showScreen,notify,onStageClear,onGameOver,updateGenderClass};
+})();
+
+/* ─── Init ─── */
+SpiritAscend.init = function() {
+  SpiritAscend.Storage.init();
+  SpiritAscend.Sound.setVolume(SpiritAscend.Storage.get().settings.volume||0.7);
+  SpiritAscend.UI.init();
+
+  // Zoom prevention
+  document.addEventListener('touchstart', e=>{ if(e.touches.length>1) e.preventDefault(); },{passive:false});
+  document.addEventListener('gesturestart', e=>e.preventDefault());
+  document.addEventListener('dblclick', e=>e.preventDefault());
+
+  // Initial screen
+  const gender = SpiritAscend.Storage.get().gender;
+  SpiritAscend.UI.showScreen(gender===null ? 'screen-gender' : 'screen-title');
+};
+
+SpiritAscend.init();
+</script>
+</body>
+</html>
